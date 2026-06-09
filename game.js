@@ -1280,6 +1280,7 @@
       document.getElementById('buff-bar').classList.remove('hidden');
       document.getElementById('footer').classList.remove('hidden');
       document.getElementById('overlay').classList.remove('hidden');
+      renderLevelMenu();
     }
   }
 
