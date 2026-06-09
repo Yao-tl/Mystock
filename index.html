@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>弹珠消除 · Pinball Breaker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- 顶部信息栏 -->
+    <header class="top-bar">
+      <div class="brand">
+        <span class="logo-dot"></span>
+        <span class="logo-text">PINBALL BREAKER</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="label">关卡</span><span id="stat-level" class="value">1</span></div>
+        <div class="stat"><span class="label">分数</span><span id="stat-score" class="value">0</span></div>
+        <div class="stat"><span class="label">剩余弹珠</span><span id="stat-balls" class="value">5</span></div>
+        <div class="stat"><span class="label">方块</span><span id="stat-bricks" class="value">0</span></div>
+        <div class="stat goal-stat"><span class="label">目标</span><span id="stat-goal" class="value">--</span></div>
+      </div>
+      <div class="actions">
+        <button id="btn-restart" class="btn">重开</button>
+      </div>
+    </header>
+
+    <!-- Buff状态栏 -->
+    <div id="buff-bar" class="buff-bar"></div>
+
+    <!-- 主体画布区域 -->
+    <main class="stage">
+      <canvas id="game" width="900" height="640"></canvas>
+
+      <!-- 关卡选择浮层 -->
+      <div id="overlay" class="overlay">
+        <div class="panel">
+          <h1 class="title">选择关卡</h1>
+          <p class="subtitle">每一关都有不同的风格与通关方式</p>
+          <div id="level-grid" class="level-grid"></div>
+          <div class="hint">
+            <span>🖱 鼠标移动 = 瞄准</span>
+            <span>🖱 左键点击 = 发射</span>
+            <span>⌨ 空格 = 发射</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 结算浮层 -->
+      <div id="result" class="overlay hidden">
+        <div class="panel result-panel">
+          <h1 id="result-title" class="title">通关成功</h1>
+          <p id="result-sub" class="subtitle"></p>
+          <div class="result-stats" id="result-stats"></div>
+          <div class="result-actions">
+            <button id="btn-replay" class="btn btn-primary">再来一次</button>
+            <button id="btn-menu" class="btn">返回菜单</button>
+            <button id="btn-next" class="btn btn-accent">下一关</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <span>收集掉落的 Buff 可获得临时增益</span>
+    </footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
