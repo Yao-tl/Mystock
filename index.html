@@ -8,8 +8,27 @@
 </head>
 <body>
   <div id="app">
+    <!-- 开始界面 -->
+    <div id="splash" class="splash">
+      <div class="splash-content">
+        <div class="splash-logo">
+          <div class="logo-ring"></div>
+          <div class="logo-core">
+            <div class="logo-dot"></div>
+          </div>
+        </div>
+        <h1 class="splash-title">PINBALL BREAKER</h1>
+        <p class="splash-sub">弹珠消除</p>
+        <button id="btn-start" class="btn btn-hero">开始游戏</button>
+        <div class="splash-controls">
+          <button id="btn-music" class="ctrl-btn" title="背景音乐">🎵</button>
+          <button id="btn-sfx" class="ctrl-btn" title="音效">🔊</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 顶部信息栏 -->
-    <header class="top-bar">
+    <header class="top-bar hidden">
       <div class="brand">
         <span class="logo-dot"></span>
         <span class="logo-text">PINBALL BREAKER</span>
@@ -27,14 +46,14 @@
     </header>
 
     <!-- Buff状态栏 -->
-    <div id="buff-bar" class="buff-bar"></div>
+    <div id="buff-bar" class="buff-bar hidden"></div>
 
     <!-- 主体画布区域 -->
     <main class="stage">
       <canvas id="game" width="900" height="640"></canvas>
 
       <!-- 关卡选择浮层 -->
-      <div id="overlay" class="overlay">
+      <div id="overlay" class="overlay hidden">
         <div class="panel">
           <h1 class="title">选择关卡</h1>
           <p class="subtitle">每一关都有不同的风格与通关方式</p>
@@ -43,6 +62,7 @@
             <span>🖱 鼠标移动 = 瞄准</span>
             <span>🖱 左键点击 = 发射</span>
             <span>⌨ 空格 = 发射</span>
+            <span>🔄 长按空格收回弹珠</span>
           </div>
         </div>
       </div>
@@ -62,7 +82,15 @@
       </div>
     </main>
 
-    <footer class="footer">
+    <!-- 音效控制 -->
+    <audio id="bgm" loop preload="auto"></audio>
+    <audio id="sfx-hit" preload="auto"></audio>
+    <audio id="sfx-bounce" preload="auto"></audio>
+    <audio id="sfx-buff" preload="auto"></audio>
+    <audio id="sfx-launch" preload="auto"></audio>
+    <audio id="sfx-break" preload="auto"></audio>
+
+    <footer class="footer hidden">
       <span>收集掉落的 Buff 可获得临时增益</span>
     </footer>
   </div>

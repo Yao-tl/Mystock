@@ -76,8 +76,8 @@
       theme: 'neon',
       goal: GOAL_TYPES.CLEAR_ALL,
       balls: 6,
-      brickRows: 4,
-      brickCols: 8,
+      brickRows: 5,
+      brickCols: 10,
       hpScale: 1.0,
       layout: 'rows',
       unbreakableRatio: 0,
@@ -89,8 +89,8 @@
       theme: 'ocean',
       goal: GOAL_TYPES.LIMITED_SHOTS,
       balls: 8,
-      brickRows: 5,
-      brickCols: 9,
+      brickRows: 6,
+      brickCols: 12,
       hpScale: 1.2,
       layout: 'checker',
       unbreakableRatio: 0.05,
@@ -103,8 +103,8 @@
       goal: GOAL_TYPES.TARGET_SCORE,
       targetScore: 2000,
       balls: 10,
-      brickRows: 5,
-      brickCols: 10,
+      brickRows: 6,
+      brickCols: 14,
       hpScale: 1.4,
       layout: 'pyramid',
       unbreakableRatio: 0.08,
@@ -118,8 +118,8 @@
       timeLimit: 90,
       targetScore: 2500,
       balls: 12,
-      brickRows: 6,
-      brickCols: 10,
+      brickRows: 7,
+      brickCols: 14,
       hpScale: 1.6,
       layout: 'diamond',
       unbreakableRatio: 0.1,
@@ -131,10 +131,10 @@
       theme: 'candy',
       goal: GOAL_TYPES.LIMITED_SHOTS,
       balls: 10,
-      brickRows: 6,
-      brickCols: 11,
+      brickRows: 7,
+      brickCols: 16,
       hpScale: 1.8,
-      layout: 'rows',
+      layout: 'waves',
       unbreakableRatio: 0.12,
       specialRatio: 0.25,
     },
@@ -144,10 +144,10 @@
       theme: 'space',
       goal: GOAL_TYPES.CLEAR_ALL,
       balls: 15,
-      brickRows: 7,
-      brickCols: 12,
+      brickRows: 8,
+      brickCols: 16,
       hpScale: 2.2,
-      layout: 'diamond',
+      layout: 'random',
       unbreakableRatio: 0.15,
       specialRatio: 0.3,
     },
@@ -225,7 +225,114 @@
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
   // ========================================================================
-  // 4. 游戏核心类
+  // 4. 音效系统
+  // ========================================================================
+
+  const AudioManager = {
+    audioContext: null,
+    bgmEnabled: true,
+    sfxEnabled: true,
+    bgmNode: null,
+    init() {
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      this.startBGM();
+    },
+    startBGM() {
+      if (!this.bgmEnabled || !this.audioContext) return;
+      const ctx = this.audioContext;
+      const gain = ctx.createGain();
+      gain.gain.value = 0.15;
+      gain.connect(ctx.destination);
+
+      let time = 0;
+      const play = () => {
+        if (!this.bgmEnabled) return;
+        const notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
+        const note = notes[Math.floor(Math.random() * notes.length)];
+        
+        const osc = ctx.createOscillator();
+        const noteGain = ctx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.value = note;
+        
+        noteGain.gain.setValueAtTime(0, ctx.currentTime);
+        noteGain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.1);
+        noteGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2);
+        
+        osc.connect(noteGain);
+        noteGain.connect(gain);
+        
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 2);
+        
+        time += 0.8 + Math.random() * 0.6;
+        setTimeout(play, time * 1000 - ctx.currentTime * 1000);
+      };
+      play();
+    },
+    toggleBGM() {
+      this.bgmEnabled = !this.bgmEnabled;
+      if (this.bgmEnabled && this.audioContext) {
+        this.startBGM();
+      }
+      return this.bgmEnabled;
+    },
+    toggleSFX() {
+      this.sfxEnabled = !this.sfxEnabled;
+      return this.sfxEnabled;
+    },
+    playTone(freq, duration, type = 'sine', volume = 0.1) {
+      if (!this.sfxEnabled || !this.audioContext) return;
+      const ctx = this.audioContext;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.9, ctx.currentTime + duration);
+      
+      gain.gain.setValueAtTime(volume, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + duration);
+    },
+    playHit() {
+      this.playTone(800 + Math.random() * 400, 0.08, 'square', 0.08);
+    },
+    playBounce() {
+      this.playTone(1200 + Math.random() * 300, 0.05, 'sine', 0.05);
+    },
+    playBreak() {
+      this.playTone(600, 0.15, 'sawtooth', 0.12);
+      setTimeout(() => this.playTone(800, 0.1, 'sine', 0.08), 50);
+    },
+    playBuff() {
+      this.playTone(523, 0.15, 'sine', 0.1);
+      setTimeout(() => this.playTone(659, 0.15, 'sine', 0.1), 100);
+      setTimeout(() => this.playTone(784, 0.2, 'sine', 0.1), 200);
+    },
+    playLaunch() {
+      this.playTone(200 + Math.random() * 100, 0.1, 'sawtooth', 0.1);
+    },
+    playSuccess() {
+      const notes = [523, 659, 784, 1047];
+      notes.forEach((n, i) => {
+        setTimeout(() => this.playTone(n, 0.3, 'sine', 0.12), i * 150);
+      });
+    },
+    playFail() {
+      this.playTone(300, 0.4, 'sawtooth', 0.1);
+      setTimeout(() => this.playTone(200, 0.6, 'sawtooth', 0.1), 300);
+    },
+  };
+
+  // ========================================================================
+  // 5. 游戏核心类
   // ========================================================================
 
   class Ball {
@@ -239,6 +346,8 @@
       this.trail = [];
       this.alive = true;
       this.laserPhase = 0;
+      this.bounceCount = 0;
+      this.lastBrickHit = null;
     }
 
     update(dt, game) {
@@ -249,16 +358,26 @@
       if (this.x - this.r < 0) {
         this.x = this.r;
         this.vx = Math.abs(this.vx);
+        this.bounceCount++;
+        AudioManager.playBounce();
       } else if (this.x + this.r > game.width) {
         this.x = game.width - this.r;
         this.vx = -Math.abs(this.vx);
+        this.bounceCount++;
+        AudioManager.playBounce();
       }
       if (this.y - this.r < 0) {
         this.y = this.r;
         this.vy = Math.abs(this.vy);
+        this.bounceCount++;
+        AudioManager.playBounce();
       }
 
       if (this.y - this.r > game.height + 40) {
+        this.alive = false;
+      }
+
+      if (this.bounceCount > 60) {
         this.alive = false;
       }
 
@@ -339,6 +458,7 @@
       this.shakeX = 0;
       this.shakeY = 0;
       this.dropChance = opts.dropChance || 0;
+      this.crackLevel = 0;
     }
 
     getRect() {
@@ -359,16 +479,20 @@
       this.hitFlash = 0.35;
       this.shakeX = rand(-3, 3);
       this.shakeY = rand(-2, 2);
+      this.crackLevel = Math.min(3, Math.floor((this.maxHp - this.hp) / (this.maxHp / 3)));
+
       if (this.hp <= 0) {
         this.alive = false;
         const baseScore = this.maxHp * 50;
         game.addScore(baseScore);
         game.spawnBrickParticles(this.x + this.w / 2, this.y + this.h / 2, this.color);
+        AudioManager.playBreak();
         if (this.special || Math.random() < this.dropChance) {
           game.maybeSpawnBuff(this.x + this.w / 2, this.y + this.h / 2, this.special);
         }
         return { destroyed: true, bounced: true };
       }
+      AudioManager.playHit();
       return { destroyed: false, bounced: true };
     }
 
@@ -380,7 +504,7 @@
 
     draw(ctx) {
       const r = this.getRect();
-      const radius = 6;
+      const radius = 4;
 
       if (this.unbreakable) {
         ctx.fillStyle = '#3a3f5a';
@@ -388,31 +512,32 @@
       } else {
         const hpRatio = this.hp / this.maxHp;
         ctx.fillStyle = this.color;
-        ctx.globalAlpha = 0.45 + hpRatio * 0.55;
+        ctx.globalAlpha = 0.4 + hpRatio * 0.6;
       }
 
       this.roundRect(ctx, r.x, r.y, r.w, r.h, radius);
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1.5;
       ctx.strokeStyle = this.unbreakable
         ? '#7a8099'
         : this.hitFlash > 0
         ? '#ffffff'
-        : 'rgba(255,255,255,0.35)';
+        : 'rgba(255,255,255,0.3)';
       this.roundRect(ctx, r.x, r.y, r.w, r.h, radius);
       ctx.stroke();
 
+      this.drawCracks(ctx, r);
+
       if (!this.unbreakable) {
         ctx.fillStyle = '#ffffff';
-        ctx.font =
-          this.h >= 28 ? 'bold 14px system-ui, sans-serif' : 'bold 11px system-ui, sans-serif';
+        ctx.font = this.h >= 22 ? 'bold 11px system-ui' : 'bold 9px system-ui';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(this.hp, r.x + r.w / 2, r.y + r.h / 2);
       } else {
-        ctx.font = '14px system-ui, sans-serif';
+        ctx.font = '11px system-ui';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = '#c5cae9';
@@ -421,12 +546,33 @@
 
       if (this.special && !this.unbreakable) {
         ctx.strokeStyle = '#ffd166';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 4]);
-        this.roundRect(ctx, r.x + 2, r.y + 2, r.w - 4, r.h - 4, radius - 1);
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 3]);
+        this.roundRect(ctx, r.x + 1.5, r.y + 1.5, r.w - 3, r.h - 3, radius - 1);
         ctx.stroke();
         ctx.setLineDash([]);
       }
+    }
+
+    drawCracks(ctx, r) {
+      if (this.crackLevel === 0 || this.unbreakable) return;
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      
+      const cracks = [
+        { x1: 0, y1: 0, x2: r.w, y2: r.h },
+        { x1: r.w, y1: 0, x2: 0, y2: r.h },
+        { x1: r.w / 2, y1: 0, x2: r.w / 2, y2: r.h },
+        { x1: 0, y1: r.h / 2, x2: r.w, y2: r.h / 2 },
+      ];
+
+      for (let i = 0; i < Math.min(this.crackLevel * 2, cracks.length); i++) {
+        const c = cracks[i];
+        ctx.moveTo(r.x + c.x1, r.y + c.y1);
+        ctx.lineTo(r.x + c.x2, r.y + c.y2);
+      }
+      ctx.stroke();
     }
 
     roundRect(ctx, x, y, w, h, r) {
@@ -479,7 +625,7 @@
       ctx.arc(this.x, this.y, r - 3, 0, TAU);
       ctx.fill();
 
-      ctx.font = '16px system-ui, sans-serif';
+      ctx.font = '16px system-ui';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(this.type.icon, this.x, this.y + 1);
@@ -517,7 +663,7 @@
   }
 
   // ========================================================================
-  // 5. 游戏主控制器
+  // 6. 游戏主控制器
   // ========================================================================
 
   class Game {
@@ -544,7 +690,7 @@
       this.mouse = { x: this.width / 2, y: this.height / 2 };
       this.aimAngle = -Math.PI / 2;
 
-      this.state = 'menu';
+      this.state = 'splash';
       this.currentLevel = null;
       this.theme = THEMES.neon;
 
@@ -563,12 +709,15 @@
       this.generateStars();
 
       this.lastTime = 0;
+      this.spaceHoldTime = 0;
+      this.isHoldingSpace = false;
+
       requestAnimationFrame((t) => this.loop(t));
     }
 
     generateStars() {
       this.stars = [];
-      for (let i = 0; i < 80; i++) {
+      for (let i = 0; i < 120; i++) {
         this.stars.push({
           x: Math.random() * this.width,
           y: Math.random() * this.height,
@@ -608,11 +757,11 @@
     generateBricks(cfg) {
       const cols = cfg.brickCols;
       const rows = cfg.brickRows;
-      const padding = 4;
-      const topOffset = 60;
-      const sideOffset = 30;
+      const padding = 5;
+      const topOffset = 50;
+      const sideOffset = 25;
       const w = (this.width - sideOffset * 2 - padding * (cols - 1)) / cols;
-      const h = Math.min(28, Math.max(20, (this.height * 0.4) / rows));
+      const h = Math.min(22, Math.max(16, (this.height * 0.45) / rows));
 
       const colors = this.theme.brickColors;
 
@@ -624,12 +773,18 @@
             return (r + c) % 2 === 0;
           case 'pyramid': {
             const mid = (cols - 1) / 2;
-            return Math.abs(c - mid) <= rows - r + 1;
+            return Math.abs(c - mid) <= rows - r;
           }
           case 'diamond': {
             const midC = (cols - 1) / 2;
             const midR = (rows - 1) / 2;
-            return Math.abs(c - midC) + Math.abs(r - midR) <= Math.max(rows, cols) / 1.3;
+            return Math.abs(c - midC) + Math.abs(r - midR) <= Math.max(rows, cols) / 1.4;
+          }
+          case 'waves': {
+            return Math.sin((c / cols) * TAU * 2 + r * 0.5) > -0.3;
+          }
+          case 'random': {
+            return Math.random() > 0.2;
           }
           default:
             return true;
@@ -640,10 +795,10 @@
         for (let c = 0; c < cols; c++) {
           if (!shouldHave(r, c)) continue;
 
-          const baseHp = Math.ceil((1 + r * 0.6) * cfg.hpScale);
+          const baseHp = Math.ceil((1 + r * 0.5) * cfg.hpScale);
           const unbreakable = Math.random() < cfg.unbreakableRatio;
           const special = Math.random() < cfg.specialRatio;
-          const dropChance = 0.15 + cfg.hpScale * 0.05;
+          const dropChance = 0.18 + cfg.hpScale * 0.05;
 
           const brick = new Brick(
             sideOffset + c * (w + padding),
@@ -681,12 +836,22 @@
       this.ballsRemaining -= 1;
       this.ballsLaunched += 1;
       this.awaitingLaunch = false;
+      AudioManager.playLaunch();
+      this.updateUI();
+    }
+
+    recallBalls() {
+      if (this.balls.length === 0) return;
+      if (this.ballsRemaining <= 0) return;
+
+      this.balls = [];
+      this.awaitingLaunch = true;
       this.updateUI();
     }
 
     maybeSpawnBuff(x, y, forced) {
       const roll = forced ? 1 : Math.random();
-      if (roll < 0.22 || forced) {
+      if (roll < 0.25 || forced) {
         const keys = Object.keys(BUFF_TYPES);
         const type = BUFF_TYPES[pick(keys)];
         this.buffs.push(new Buff(x, y, type));
@@ -694,7 +859,7 @@
     }
 
     spawnBrickParticles(x, y, color) {
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 12; i++) {
         this.particles.push(new Particle(x, y, color));
       }
     }
@@ -721,6 +886,7 @@
           this.paddle.w = this.paddle.baseW * 1.6;
         }
       }
+      AudioManager.playBuff();
       this.updateBuffBar();
       this.updateUI();
     }
@@ -761,7 +927,6 @@
       }
     }
 
-    // 碰撞：弹珠 vs 矩形
     collideBallRect(ball, rect) {
       const cx = clamp(ball.x, rect.x, rect.x + rect.w);
       const cy = clamp(ball.y, rect.y, rect.y + rect.h);
@@ -794,6 +959,16 @@
         }
       }
 
+      if (this.isHoldingSpace) {
+        this.spaceHoldTime += dt;
+        if (this.spaceHoldTime > 0.5) {
+          this.recallBalls();
+          this.spaceHoldTime = 0;
+        }
+      } else {
+        this.spaceHoldTime = 0;
+      }
+
       for (const [key, entry] of this.activeBuffs) {
         entry.remaining -= dt;
         if (entry.remaining <= 0) {
@@ -818,6 +993,7 @@
           if (res.destroyed) this.bricksDestroyed += 1;
           if (!this.hasBuff('LASER') || brick.unbreakable) {
             this.reflectBall(ball, hit.nx, hit.ny, hit.overlap);
+            ball.bounceCount++;
           }
         }
 
@@ -835,6 +1011,8 @@
           ball.vx = Math.cos(angle) * speed;
           ball.vy = Math.sin(angle) * speed;
           ball.y = pRect.y - ball.r - 1;
+          ball.bounceCount = 0;
+          AudioManager.playBounce();
         }
       }
 
@@ -908,11 +1086,8 @@
         won && this.currentLevel.id < LEVELS.length ? '' : 'none';
 
       resultEl.classList.remove('hidden');
+      won ? AudioManager.playSuccess() : AudioManager.playFail();
     }
-
-    // ========================================================================
-    // 绘制
-    // ========================================================================
 
     drawBackground() {
       const ctx = this.ctx;
@@ -924,13 +1099,13 @@
 
       ctx.strokeStyle = this.theme.grid;
       ctx.lineWidth = 1;
-      for (let x = 0; x < this.width; x += 40) {
+      for (let x = 0; x < this.width; x += 30) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, this.height);
         ctx.stroke();
       }
-      for (let y = 0; y < this.height; y += 40) {
+      for (let y = 0; y < this.height; y += 30) {
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(this.width, y);
@@ -1010,14 +1185,14 @@
       if (!this.currentLevel) return;
       const ctx = this.ctx;
       if (this.currentLevel.goal === GOAL_TYPES.TIME_SCORE) {
-        ctx.font = 'bold 18px system-ui, sans-serif';
-        ctx.fillStyle = '#ffd166';
+        ctx.font = 'bold 18px system-ui';
+        ctx.fillStyle = this.timeLeft < 10 ? '#ff5470' : '#ffd166';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.fillText(`⏱ ${Math.ceil(this.timeLeft)}s`, 16, 16);
       }
       if (this.currentLevel.targetScore) {
-        ctx.font = 'bold 16px system-ui, sans-serif';
+        ctx.font = 'bold 16px system-ui';
         ctx.fillStyle = '#69f0ae';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'top';
@@ -1036,10 +1211,6 @@
       this.drawAimGuide();
       this.drawTopStatus();
     }
-
-    // ========================================================================
-    // UI 同步
-    // ========================================================================
 
     updateUI() {
       document.getElementById('stat-level').textContent = this.currentLevel
@@ -1070,17 +1241,13 @@
           <span style="color:${entry.type.color}">${entry.remaining.toFixed(1)}s</span>`;
         bar.appendChild(chip);
       }
-      if (this.activeBuffs.size === 0) {
+      if (this.activeBuffs.size === 0 && this.state === 'playing') {
         const tip = document.createElement('div');
         tip.style.cssText = 'color:#a9b1d6;font-size:12px;padding:6px 10px;';
         tip.textContent = '提示：击碎方块有几率掉落 Buff，用炮台接住即可生效';
         bar.appendChild(tip);
       }
     }
-
-    // ========================================================================
-    // 主循环
-    // ========================================================================
 
     loop(t) {
       const dt = Math.min(0.033, (t - this.lastTime) / 1000 || 0);
@@ -1105,10 +1272,19 @@
       this.aimAngle = angle;
       this.paddle.x = clamp(x, this.paddle.w / 2 + 10, this.width - this.paddle.w / 2 - 10);
     }
+
+    showMenu() {
+      this.state = 'menu';
+      document.getElementById('splash').classList.add('hidden');
+      document.getElementById('top-bar').classList.remove('hidden');
+      document.getElementById('buff-bar').classList.remove('hidden');
+      document.getElementById('footer').classList.remove('hidden');
+      document.getElementById('overlay').classList.remove('hidden');
+    }
   }
 
   // ========================================================================
-  // 6. 启动 & 菜单
+  // 7. 启动 & 菜单
   // ========================================================================
 
   const canvas = document.getElementById('game');
@@ -1134,7 +1310,16 @@
   window.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
       e.preventDefault();
-      game.launchBall();
+      if (!game.isHoldingSpace && game.state === 'playing' && game.awaitingLaunch) {
+        game.launchBall();
+      }
+      game.isHoldingSpace = true;
+    }
+  });
+
+  window.addEventListener('keyup', (e) => {
+    if (e.code === 'Space') {
+      game.isHoldingSpace = false;
     }
   });
 
@@ -1167,7 +1352,7 @@
         <div class="tags">
           <span class="tag">${theme.name}风</span>
           <span class="tag">${goalLabel}</span>
-          <span class="tag">血量 ×${lv.hpScale.toFixed(1)}</span>
+          <span class="tag">${lv.brickCols}×${lv.brickRows}</span>
         </div>
       `;
       card.addEventListener('click', () => {
@@ -1178,6 +1363,21 @@
       grid.appendChild(card);
     });
   }
+
+  document.getElementById('btn-start').addEventListener('click', () => {
+    AudioManager.init();
+    game.showMenu();
+  });
+
+  document.getElementById('btn-music').addEventListener('click', () => {
+    const enabled = AudioManager.toggleBGM();
+    document.getElementById('btn-music').classList.toggle('active', enabled);
+  });
+
+  document.getElementById('btn-sfx').addEventListener('click', () => {
+    const enabled = AudioManager.toggleSFX();
+    document.getElementById('btn-sfx').classList.toggle('active', enabled);
+  });
 
   document.getElementById('btn-restart').addEventListener('click', () => {
     if (game.currentLevel) {
