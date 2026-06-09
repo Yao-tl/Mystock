@@ -315,6 +315,7 @@ body {
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   cursor: crosshair;
+  z-index: 1;
 }
 
 /* 浮层 */
@@ -328,6 +329,7 @@ body {
   backdrop-filter: blur(6px);
   border-radius: 18px;
   animation: fadeIn 0.25s ease;
+  z-index: 1000;
 }
 
 .overlay.hidden {

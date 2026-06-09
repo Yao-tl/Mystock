@@ -1257,7 +1257,9 @@
         this.update(dt);
         this.updateBuffBar();
       }
-      this.render();
+      if (this.state !== 'splash') {
+        this.render();
+      }
 
       requestAnimationFrame((tt) => this.loop(tt));
     }
@@ -1366,8 +1368,17 @@
   }
 
   document.getElementById('btn-start').addEventListener('click', () => {
-    AudioManager.init();
+    console.log('btn-start clicked!');
+    try {
+      AudioManager.init();
+      console.log('Audio initialized');
+    } catch(e) {
+      console.log('Audio init failed:', e);
+    }
     game.showMenu();
+    console.log('showMenu called');
+    console.log('splash hidden:', document.getElementById('splash').classList.contains('hidden'));
+    console.log('overlay visible:', !document.getElementById('overlay').classList.contains('hidden'));
   });
 
   document.getElementById('btn-music').addEventListener('click', () => {
