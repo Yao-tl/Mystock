@@ -1007,6 +1007,7 @@
     }
 
     drawTopStatus() {
+      if (!this.currentLevel) return;
       const ctx = this.ctx;
       if (this.currentLevel.goal === GOAL_TYPES.TIME_SCORE) {
         ctx.font = 'bold 18px system-ui, sans-serif';
@@ -1049,7 +1050,9 @@
       document.getElementById('stat-balls').textContent =
         this.ballsRemaining + activeBalls;
       document.getElementById('stat-bricks').textContent =
-        this.bricks.filter((b) => !b.unbreakable).length;
+        this.bricks.length > 0
+          ? this.bricks.filter((b) => !b.unbreakable).length
+          : 0;
       document.getElementById('stat-goal').textContent = this.currentLevel
         ? this.goalText()
         : '--';
