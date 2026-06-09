@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pixel Mech Duel — 像素机甲对战</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="title-bar">
+      <h1>PIXEL&nbsp;MECH&nbsp;DUEL</h1>
+      <div class="subtitle">像素机甲对战 · Demo</div>
+    </header>
+
+    <div id="stage">
+      <canvas id="game" width="640" height="360"></canvas>
+      <div id="overlay" class="overlay">
+        <div class="overlay-inner">
+          <div class="big-title" id="overlayTitle">READY?</div>
+          <div class="sub" id="overlaySub">按 [回车] 开始 / 重开</div>
+        </div>
+      </div>
+    </div>
+
+    <section class="panel">
+      <div class="col">
+        <h2>P1 · 赤红</h2>
+        <ul>
+          <li><kbd>A</kbd> / <kbd>D</kbd> 移动</li>
+          <li><kbd>W</kbd> 跳跃</li>
+          <li><kbd>F</kbd> 攻击</li>
+          <li><kbd>G</kbd> 防御</li>
+        </ul>
+      </div>
+      <div class="col middle">
+        <h2>规则</h2>
+        <ul>
+          <li>HP 归零者败 · 3 局 2 胜</li>
+          <li>防御中受到的伤害降为 0，但移动变慢</li>
+          <li>攻击有短冷却，连击需把握节奏</li>
+          <li>随时按 <kbd>Enter</kbd> 重开</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h2>P2 · 深蓝</h2>
+        <ul>
+          <li><kbd>←</kbd> / <kbd>→</kbd> 移动</li>
+          <li><kbd>↑</kbd> 跳跃</li>
+          <li><kbd>J</kbd> 攻击</li>
+          <li><kbd>K</kbd> 防御</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer>
+      <span>Canvas 2D · 纯像素绘制 · 无外部素材</span>
+    </footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
