@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heartfelt - WebGL2 玻璃雨滴效果</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: #0a0a0f;
+    color: #e8eef5;
+    user-select: none;
+  }
+  
+  #canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+  }
+  
+  .control-panel {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    width: 300px;
+    background: rgba(15, 20, 30, 0.55);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .control-panel.collapsed {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .control-panel.collapsed .panel-header h2,
+  .control-panel.collapsed .panel-content {
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .panel-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .panel-header h2 {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #7dd3fc, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+  }
+  
+  .toggle-btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.7);
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+  }
+  
+  .control-panel.collapsed .toggle-btn {
+    transform: rotate(180deg);
+  }
+  
+  .toggle-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .panel-content {
+    padding: 16px;
+    max-height: 70vh;
+    overflow-y: auto;
+    transition: opacity 0.2s 0.1s;
+  }
+  
+  .panel-content::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .panel-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .panel-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+  }
+  
+  .control-group {
+    margin-bottom: 18px;
+  }
+  
+  .control-group:last-child {
+    margin-bottom: 0;
+  }
+  
+  .control-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .control-value {
+    font-size: 11px;
+    font-weight: 600;
+    color: #7dd3fc;
+    background: rgba(125, 211, 252, 0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+    min-width: 36px;
+    text-align: center;
+  }
+  
+  input[type="range"] {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: linear-gradient(135deg, #7dd3fc, #a78bfa);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(125, 211, 252, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 2px 12px rgba(125, 211, 252, 0.6);
+  }
+  
+  input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: linear-gradient(135deg, #7dd3fc, #a78bfa);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 8px rgba(125, 211, 252, 0.4);
+  }
+  
+  .upload-group {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .upload-btn {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  
+  .upload-btn:hover {
+    background: rgba(125, 211, 252, 0.15);
+    border-color: rgba(125, 211, 252, 0.3);
+    color: #7dd3fc;
+  }
+  
+  .reset-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .reset-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  #fileInput, #videoInput {
+    display: none;
+  }
+  
+  .floating-text {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 50;
+    padding: 32px 48px;
+    background: rgba(15, 20, 30, 0.4);
+    backdrop-filter: blur(16px) saturate(1.3);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    cursor: grab;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+    transition: box-shadow 0.3s;
+    max-width: 90vw;
+  }
+  
+  .floating-text:active {
+    cursor: grabbing;
+  }
+  
+  .floating-text:hover {
+    box-shadow: 0 12px 50px rgba(125, 211, 252, 0.15);
+  }
+  
+  .floating-text h1 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #ffffff 0%, #7dd3fc 50%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    white-space: nowrap;
+  }
+  
+  .floating-text p {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.6;
+    max-width: 400px;
+  }
+  
+  .drag-hint {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .drag-hint svg {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .status-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    padding: 8px 16px;
+    background: rgba(15, 20, 30, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+  }
+  
+  .error-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 200;
+    padding: 24px 32px;
+    background: rgba(220, 38, 38, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    color: white;
+    font-size: 14px;
+    display: none;
+    max-width: 80vw;
+  }
+  
+  .error-overlay.show {
+    display: block;
+  }
+  
+  .error-overlay h3 {
+    margin-bottom: 8px;
+    font-size: 16px;
+  }
+  
+  .error-overlay pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  @media (max-width: 640px) {
+    .control-panel {
+      width: calc(100% - 40px);
+      top: 10px;
+      right: 10px;
+      left: 10px;
+    }
+    
+    .floating-text {
+      padding: 24px 32px;
+    }
+    
+    .floating-text h1 {
+      font-size: 24px;
+    }
+    
+    .floating-text p {
+      font-size: 12px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div class="error-overlay" id="errorOverlay">
+  <h3>WebGL 渲染错误</h3>
+  <pre id="errorMessage"></pre>
+</div>
+
+<div class="control-panel" id="controlPanel">
+  <div class="panel-header" id="panelHeader">
+    <h2>雨滴控制面板</h2>
+    <div class="toggle-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+    </div>
+  </div>
+  <div class="panel-content">
+    <div class="control-group">
+      <div class="control-label">
+        <span>雨势强度</span>
+        <span class="control-value" id="rainValue">0.70</span>
+      </div>
+      <input type="range" id="rainIntensity" min="0" max="1" step="0.01" value="0.7">
+    </div>
+    
+    <div class="control-group">
+      <div class="control-label">
+        <span>雾气浓度</span>
+        <span class="control-value" id="fogValue">0.35</span>
+      </div>
+      <input type="range" id="fogDensity" min="0" max="1" step="0.01" value="0.35">
+    </div>
+    
+    <div class="control-group">
+      <div class="control-label">
+        <span>折射率</span>
+        <span class="control-value" id="refractValue">1.20</span>
+      </div>
+      <input type="range" id="refraction" min="0.2" max="2.5" step="0.01" value="1.2">
+    </div>
+    
+    <div class="control-group">
+      <div class="control-label">
+        <span>雨滴大小</span>
+        <span class="control-value" id="sizeValue">1.00</span>
+      </div>
+      <input type="range" id="dropSize" min="0.3" max="2.5" step="0.01" value="1.0">
+    </div>
+    
+    <div class="control-group">
+      <div class="control-label">
+        <span>下落速度</span>
+        <span class="control-value" id="speedValue">1.00</span>
+      </div>
+      <input type="range" id="fallSpeed" min="0" max="3" step="0.01" value="1.0">
+    </div>
+    
+    <div class="control-group">
+      <div class="control-label">
+        <span>背景流体</span>
+        <span class="control-value" id="fluidValue">1.00</span>
+      </div>
+      <input type="range" id="fluidSpeed" min="0" max="2" step="0.01" value="1.0">
+    </div>
+    
+    <div class="control-group">
+      <div class="control-label">
+        <span>背景贴图</span>
+      </div>
+      <div class="upload-group">
+        <label class="upload-btn" for="fileInput">上传图片</label>
+        <label class="upload-btn" for="videoInput">上传视频</label>
+      </div>
+      <input type="file" id="fileInput" accept="image/*">
+      <input type="file" id="videoInput" accept="video/*">
+    </div>
+    
+    <button class="reset-btn" id="resetBtn">重置默认效果</button>
+  </div>
+</div>
+
+<div class="floating-text" id="floatingText">
+  <div class="drag-hint">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 9l-3 3 3 3"></path>
+      <path d="M9 5l3-3 3 3"></path>
+      <path d="M15 19l-3 3-3-3"></path>
+      <path d="M19 9l3 3-3 3"></path>
+    </svg>
+    拖拽移动
+  </div>
+  <h1>Heartfelt 雨滴</h1>
+  <p>WebGL2 实时玻璃雨滴折射效果，灵感来自 Shadertoy 经典作品。调节右侧控制面板参数，或上传图片/视频替换背景。</p>
+</div>
+
+<div class="status-bar">
+  <div class="status-item">
+    <span class="status-dot"></span>
+    <span id="statusText">初始化中...</span>
+  </div>
+  <div class="status-item">
+    <span id="fpsDisplay">-- FPS</span>
+  </div>
+</div>
+
+<script id="vertexShader" type="x-shader/x-vertex">#version 300 es
+  in vec2 a_position;
+  out vec2 v_uv;
+  void main() {
+    v_uv = a_position * 0.5 + 0.5;
+    gl_Position = vec4(a_position, 0.0, 1.0);
+  }
+</script>
+
+<script id="fragmentShader" type="x-shader/x-fragment">#version 300 es
+  precision highp float;
+  
+  in vec2 v_uv;
+  out vec4 fragColor;
+  
+  uniform float uTime;
+  uniform vec2 uResolution;
+  uniform float uRainIntensity;
+  uniform float uFogDensity;
+  uniform float uRefraction;
+  uniform float uDropSize;
+  uniform float uFallSpeed;
+  uniform float uFluidSpeed;
+  uniform sampler2D uBackgroundTex;
+  uniform float uUseBackground;
+  
+  float hash21(vec2 p) {
+    p = fract(p * vec2(234.34, 435.345));
+    p += dot(p, p + 34.23);
+    return fract(p.x * p.y);
+  }
+  
+  float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(
+      mix(hash21(i + vec2(0.0, 0.0)), hash21(i + vec2(1.0, 0.0)), f.x),
+      mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), f.x),
+      f.y
+    );
+  }
+  
+  float fbm(vec2 p) {
+    float v = 0.0;
+    float a = 0.5;
+    for (int i = 0; i < 4; i++) {
+      v += a * noise(p);
+      p *= 2.0;
+      a *= 0.5;
+    }
+    return v;
+  }
+  
+  vec3 fluidBackground(vec2 uv, float t) {
+    float time = t * 0.15 * uFluidSpeed;
+    vec2 p = uv * 2.5;
+    
+    float n1 = fbm(p + vec2(time * 0.3, time * 0.2));
+    float n2 = fbm(p * 1.5 + vec2(-time * 0.2, time * 0.4) + n1 * 2.0);
+    float combined = (n1 + n2 * 0.6) / 1.6;
+    
+    vec3 c1 = vec3(0.04, 0.06, 0.12);
+    vec3 c2 = vec3(0.08, 0.2, 0.4);
+    vec3 c3 = vec3(0.25, 0.45, 0.7);
+    vec3 c4 = vec3(0.5, 0.35, 0.75);
+    
+    vec3 col = mix(c1, c2, smoothstep(0.2, 0.5, combined));
+    col = mix(col, c3, smoothstep(0.4, 0.7, combined));
+    col = mix(col, c4, smoothstep(0.6, 0.9, combined));
+    
+    float glow = pow(max(0.0, combined - 0.5), 2.0) * 0.4;
+    col += vec3(0.3, 0.5, 0.8) * glow;
+    
+    return col;
+  }
+  
+  vec2 getDrop(vec2 uv, float t, float scale, float density, float speed) {
+    vec2 p = uv * scale;
+    p.y += t * speed * uFallSpeed;
+    
+    vec2 gv = fract(p) - 0.5;
+    vec2 id = floor(p);
+    
+    float n = hash21(id);
+    
+    if (n > density) return vec2(0.0);
+    
+    vec2 offset = vec2(
+      hash21(id * 3.7) - 0.5,
+      hash21(id * 5.3) - 0.5
+    ) * 0.6;
+    
+    vec2 pos = gv - offset;
+    pos.y += (fract(t * 0.5 + n * 5.0) - 0.5) * 0.8;
+    pos = fract(pos + 0.5) - 0.5;
+    
+    float size = mix(0.15, 0.38, hash21(id * 7.1)) * uDropSize;
+    float d = length(pos);
+    
+    if (d > size) return vec2(0.0);
+    
+    float nd = d / size;
+    float height = sqrt(1.0 - nd * nd);
+    
+    float wobble = sin(t * 2.0 + id.x * 10.0) * 0.04 * (1.0 - nd);
+    height += wobble * (1.0 - nd * nd);
+    
+    float mask = smoothstep(size, size * 0.6, d);
+    
+    float eps = 0.02;
+    float h = height;
+    float hx = sqrt(1.0 - min(1.0, (d + eps) / size * (d + eps) / size));
+    float hy = hx;
+    float nx = (h - hx) / eps * 0.5;
+    float ny = (h - hy) / eps * 0.5;
+    
+    float angle = atan(pos.y, pos.x);
+    float nxf = nx * cos(angle) - ny * sin(angle);
+    float nyf = nx * sin(angle) + ny * cos(angle);
+    
+    return vec2(mask * height, mask);
+  }
+  
+  vec3 getDropNormal(vec2 uv, float t, float scale, float density, float speed) {
+    float eps = 0.003;
+    vec2 c = getDrop(uv, t, scale, density, speed);
+    vec2 cx = getDrop(uv + vec2(eps, 0.0), t, scale, density, speed);
+    vec2 cy = getDrop(uv + vec2(0.0, eps), t, scale, density, speed);
+    
+    if (c.y < 0.01) return vec3(0.0, 0.0, 1.0);
+    
+    float h = c.x;
+    float hx = cx.x;
+    float hy = cy.x;
+    
+    vec3 normal = normalize(vec3(
+      (h - hx) / eps * 0.5,
+      (h - hy) / eps * 0.5,
+      1.0
+    ));
+    
+    return normal * c.y;
+  }
+  
+  float streakLayer(vec2 uv, float t, float scale, float speed) {
+    vec2 p = uv * vec2(scale * 0.5, scale);
+    p.y += t * speed * uFallSpeed;
+    p.x += sin(p.y * 2.0) * 0.15;
+    
+    float n = fbm(p * 3.0);
+    float s = pow(n, 4.0) * 0.12;
+    return s * uRainIntensity;
+  }
+  
+  void main() {
+    vec2 uv = v_uv;
+    float aspect = uResolution.x / uResolution.y;
+    vec2 suv = vec2(uv.x * aspect, uv.y);
+    float t = uTime;
+    
+    vec3 totalNormal = vec3(0.0, 0.0, 0.0);
+    float totalMask = 0.0;
+    
+    vec3 n1 = getDropNormal(suv, t, 6.0, 0.35 * uRainIntensity, 0.8);
+    totalNormal += n1;
+    totalMask += n1.z;
+    
+    vec3 n2 = getDropNormal(suv, t, 10.0, 0.25 * uRainIntensity, 1.2);
+    totalNormal += n2 * 0.6;
+    totalMask += n2.z * 0.6;
+    
+    vec3 n3 = getDropNormal(suv, t, 16.0, 0.2 * uRainIntensity, 0.5);
+    totalNormal += n3 * 0.3;
+    totalMask += n3.z * 0.3;
+    
+    if (totalMask > 0.001) {
+      totalNormal = normalize(totalNormal);
+    } else {
+      totalNormal = vec3(0.0, 0.0, 1.0);
+    }
+    
+    float streakMask = streakLayer(suv, t, 2.0, 0.6);
+    streakMask += streakLayer(suv, t, 4.0, 1.0) * 0.5;
+    
+    vec2 refractOffset = totalNormal.xy * uRefraction * 0.12;
+    refractOffset.y += streakMask * 0.025 * uRefraction;
+    
+    vec2 bgUV = uv + refractOffset;
+    bgUV = clamp(bgUV, 0.0, 1.0);
+    
+    vec3 bgColor;
+    if (uUseBackground > 0.5) {
+      bgColor = texture(uBackgroundTex, bgUV).rgb;
+    } else {
+      bgColor = fluidBackground(bgUV, t);
+    }
+    
+    vec3 col = bgColor;
+    
+    float dropAmount = smoothstep(0.0, 0.3, totalMask);
+    
+    float fresnel = pow(1.0 - max(0.0, totalNormal.z), 3.0);
+    col += vec3(0.9, 0.95, 1.0) * fresnel * 0.35 * dropAmount;
+    
+    vec3 lightDir = normalize(vec3(0.4, 0.7, 1.0));
+    float spec = pow(max(0.0, dot(totalNormal, lightDir)), 40.0);
+    col += vec3(1.0, 0.98, 0.95) * spec * 0.5 * dropAmount;
+    
+    float ambient = (1.0 - totalNormal.z) * 0.12;
+    col += vec3(0.7, 0.8, 0.95) * ambient * dropAmount;
+    
+    float fogAmt = uFogDensity * 0.4 + streakMask * 0.25;
+    vec3 fogColor = vec3(0.06, 0.08, 0.12);
+    col = mix(col, fogColor, fogAmt);
+    
+    float fogNoise = fbm(uv * 1.5 + vec2(t * 0.03, t * 0.02));
+    col = mix(col, vec3(0.08, 0.1, 0.16), fogNoise * uFogDensity * 0.25);
+    
+    float vig = 1.0 - 0.25 * length(uv - 0.5) * 1.414;
+    col *= vig;
+    
+    col = pow(col, vec3(0.95));
+    
+    float grain = hash21(uv * uResolution.xy + t * 0.1) * 0.02;
+    col += grain;
+    
+    fragColor = vec4(col, 1.0);
+  }
+</script>
+
+<script>
+(function() {
+  'use strict';
+  
+  const canvas = document.getElementById('canvas');
+  const errorOverlay = document.getElementById('errorOverlay');
+  const errorMessage = document.getElementById('errorMessage');
+  const statusText = document.getElementById('statusText');
+  const statusDot = document.querySelector('.status-dot');
+  
+  function showError(msg) {
+    errorOverlay.classList.add('show');
+    errorMessage.textContent = msg;
+    statusText.textContent = '渲染错误';
+    statusDot.style.background = '#ef4444';
+    statusDot.style.boxShadow = '0 0 8px rgba(239, 68, 68, 0.5)';
+    console.error(msg);
+  }
+  
+  let gl = null;
+  try {
+    gl = canvas.getContext('webgl2', {
+      antialias: false,
+      alpha: false,
+      powerPreference: 'high-performance',
+      preserveDrawingBuffer: false
+    });
+  } catch (e) {
+    showError('WebGL2 初始化失败: ' + e.message);
+    return;
+  }
+  
+  if (!gl) {
+    showError('您的浏览器不支持 WebGL2，请使用现代浏览器访问。');
+    return;
+  }
+  
+  const params = {
+    rainIntensity: 0.7,
+    fogDensity: 0.35,
+    refraction: 1.2,
+    dropSize: 1.0,
+    fallSpeed: 1.0,
+    fluidSpeed: 1.0,
+    useBackground: 0.0
+  };
+  
+  const defaults = { ...params };
+  
+  function createShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      const info = gl.getShaderInfoLog(shader);
+      gl.deleteShader(shader);
+      throw new Error((type === gl.VERTEX_SHADER ? '顶点' : '片段') + '着色器编译错误:\n' + info);
+    }
+    return shader;
+  }
+  
+  function createProgram(gl, vertexShader, fragmentShader) {
+    const program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      const info = gl.getProgramInfoLog(program);
+      gl.deleteProgram(program);
+      throw new Error('着色器程序链接错误:\n' + info);
+    }
+    return program;
+  }
+  
+  let program = null;
+  let uniforms = {};
+  let vao = null;
+  
+  try {
+    const vertexSource = document.getElementById('vertexShader').textContent.trim();
+    const fragmentSource = document.getElementById('fragmentShader').textContent.trim();
+    
+    const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexSource);
+    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+    program = createProgram(gl, vertexShader, fragmentShader);
+    
+    const positions = new Float32Array([
+      -1, -1,
+       1, -1,
+      -1,  1,
+       1,  1
+    ]);
+    
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+    
+    vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    
+    const positionLoc = gl.getAttribLocation(program, 'a_position');
+    if (positionLoc >= 0) {
+      gl.enableVertexAttribArray(positionLoc);
+      gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+    }
+    
+    gl.bindVertexArray(null);
+    
+    uniforms = {
+      time: gl.getUniformLocation(program, 'uTime'),
+      resolution: gl.getUniformLocation(program, 'uResolution'),
+      rainIntensity: gl.getUniformLocation(program, 'uRainIntensity'),
+      fogDensity: gl.getUniformLocation(program, 'uFogDensity'),
+      refraction: gl.getUniformLocation(program, 'uRefraction'),
+      dropSize: gl.getUniformLocation(program, 'uDropSize'),
+      fallSpeed: gl.getUniformLocation(program, 'uFallSpeed'),
+      fluidSpeed: gl.getUniformLocation(program, 'uFluidSpeed'),
+      backgroundTex: gl.getUniformLocation(program, 'uBackgroundTex'),
+      useBackground: gl.getUniformLocation(program, 'uUseBackground')
+    };
+    
+    statusText.textContent = 'WebGL2 运行中';
+    
+  } catch (e) {
+    showError(e.message);
+    return;
+  }
+  
+  let bgTexture = null;
+  let videoElement = null;
+  let videoPlaying = false;
+  
+  function createTexture(source) {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    
+    return texture;
+  }
+  
+  function updateVideoTexture() {
+    if (videoElement && videoPlaying && bgTexture && videoElement.readyState >= 2) {
+      gl.bindTexture(gl.TEXTURE_2D, bgTexture);
+      try {
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, videoElement);
+      } catch (e) {
+        // 视频帧可能还没准备好，忽略
+      }
+    }
+  }
+  
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+  
+  window.addEventListener('resize', resize);
+  resize();
+  
+  let startTime = performance.now();
+  let lastTime = startTime;
+  let frameCount = 0;
+  let fps = 0;
+  let animId = null;
+  
+  const fpsDisplay = document.getElementById('fpsDisplay');
+  
+  function render(now) {
+    try {
+      const time = (now - startTime) / 1000;
+      
+      frameCount++;
+      if (now - lastTime >= 1000) {
+        fps = frameCount;
+        fpsDisplay.textContent = fps + ' FPS';
+        frameCount = 0;
+        lastTime = now;
+      }
+      
+      updateVideoTexture();
+      
+      gl.useProgram(program);
+      gl.bindVertexArray(vao);
+      
+      gl.uniform1f(uniforms.time, time);
+      gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
+      gl.uniform1f(uniforms.rainIntensity, params.rainIntensity);
+      gl.uniform1f(uniforms.fogDensity, params.fogDensity);
+      gl.uniform1f(uniforms.refraction, params.refraction);
+      gl.uniform1f(uniforms.dropSize, params.dropSize);
+      gl.uniform1f(uniforms.fallSpeed, params.fallSpeed);
+      gl.uniform1f(uniforms.fluidSpeed, params.fluidSpeed);
+      gl.uniform1f(uniforms.useBackground, params.useBackground);
+      
+      if (bgTexture && uniforms.backgroundTex) {
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, bgTexture);
+        gl.uniform1i(uniforms.backgroundTex, 0);
+      }
+      
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      
+      animId = requestAnimationFrame(render);
+      
+    } catch (e) {
+      showError('渲染错误: ' + e.message);
+      if (animId) cancelAnimationFrame(animId);
+    }
+  }
+  
+  animId = requestAnimationFrame(render);
+  
+  const controlPanel = document.getElementById('controlPanel');
+  const panelHeader = document.getElementById('panelHeader');
+  
+  panelHeader.addEventListener('click', () => {
+    controlPanel.classList.toggle('collapsed');
+  });
+  
+  function setupSlider(id, paramName, valueId, format) {
+    const slider = document.getElementById(id);
+    const valueEl = document.getElementById(valueId);
+    const fmt = format || ((v) => v.toFixed(2));
+    
+    slider.addEventListener('input', (e) => {
+      params[paramName] = parseFloat(e.target.value);
+      valueEl.textContent = fmt(params[paramName]);
+    });
+  }
+  
+  setupSlider('rainIntensity', 'rainIntensity', 'rainValue');
+  setupSlider('fogDensity', 'fogDensity', 'fogValue');
+  setupSlider('refraction', 'refraction', 'refractValue');
+  setupSlider('dropSize', 'dropSize', 'sizeValue');
+  setupSlider('fallSpeed', 'fallSpeed', 'speedValue');
+  setupSlider('fluidSpeed', 'fluidSpeed', 'fluidValue');
+  
+  const fileInput = document.getElementById('fileInput');
+  const videoInput = document.getElementById('videoInput');
+  
+  function cleanupMedia() {
+    if (videoElement) {
+      videoElement.pause();
+      videoElement.src = '';
+      videoElement.load();
+      videoElement = null;
+      videoPlaying = false;
+    }
+    if (bgTexture) {
+      gl.deleteTexture(bgTexture);
+      bgTexture = null;
+    }
+  }
+  
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    cleanupMedia();
+    params.useBackground = 0.0;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        bgTexture = createTexture(img);
+        params.useBackground = 1.0;
+      };
+      img.onerror = () => {
+        showError('图片加载失败');
+      };
+      img.src = event.target.result;
+    };
+    reader.onerror = () => {
+      showError('文件读取失败');
+    };
+    reader.readAsDataURL(file);
+  });
+  
+  videoInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    cleanupMedia();
+    params.useBackground = 0.0;
+    
+    videoElement = document.createElement('video');
+    videoElement.loop = true;
+    videoElement.muted = true;
+    videoElement.playsInline = true;
+    videoElement.crossOrigin = 'anonymous';
+    
+    const url = URL.createObjectURL(file);
+    videoElement.src = url;
+    
+    videoElement.addEventListener('loadeddata', () => {
+      try {
+        bgTexture = createTexture(videoElement);
+        params.useBackground = 1.0;
+        videoPlaying = true;
+        videoElement.play().catch(() => {});
+      } catch (e) {
+        showError('视频纹理创建失败: ' + e.message);
+      }
+    });
+    
+    videoElement.addEventListener('error', () => {
+      showError('视频加载失败');
+      URL.revokeObjectURL(url);
+    });
+  });
+  
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    for (const key in defaults) {
+      params[key] = defaults[key];
+    }
+    
+    document.getElementById('rainIntensity').value = defaults.rainIntensity;
+    document.getElementById('rainValue').textContent = defaults.rainIntensity.toFixed(2);
+    document.getElementById('fogDensity').value = defaults.fogDensity;
+    document.getElementById('fogValue').textContent = defaults.fogDensity.toFixed(2);
+    document.getElementById('refraction').value = defaults.refraction;
+    document.getElementById('refractValue').textContent = defaults.refraction.toFixed(2);
+    document.getElementById('dropSize').value = defaults.dropSize;
+    document.getElementById('sizeValue').textContent = defaults.dropSize.toFixed(2);
+    document.getElementById('fallSpeed').value = defaults.fallSpeed;
+    document.getElementById('speedValue').textContent = defaults.fallSpeed.toFixed(2);
+    document.getElementById('fluidSpeed').value = defaults.fluidSpeed;
+    document.getElementById('fluidValue').textContent = defaults.fluidSpeed.toFixed(2);
+    
+    cleanupMedia();
+    params.useBackground = 0.0;
+    
+    fileInput.value = '';
+    videoInput.value = '';
+  });
+  
+  const floatingText = document.getElementById('floatingText');
+  let isDragging = false;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+  
+  function getClientPos(e) {
+    if (e.touches && e.touches.length > 0) {
+      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+  }
+  
+  function startDrag(e) {
+    if (e.target.closest('button, input, label, a')) return;
+    
+    isDragging = true;
+    const pos = getClientPos(e);
+    const rect = floatingText.getBoundingClientRect();
+    
+    dragOffsetX = pos.x - rect.left - rect.width / 2;
+    dragOffsetY = pos.y - rect.top - rect.height / 2;
+    
+    floatingText.style.transition = 'none';
+    e.preventDefault();
+  }
+  
+  function onDrag(e) {
+    if (!isDragging) return;
+    
+    const pos = getClientPos(e);
+    const rect = floatingText.getBoundingClientRect();
+    
+    let newX = pos.x - window.innerWidth / 2 - dragOffsetX;
+    let newY = pos.y - window.innerHeight / 2 - dragOffsetY;
+    
+    const maxX = window.innerWidth / 2 - rect.width / 2 - 10;
+    const maxY = window.innerHeight / 2 - rect.height / 2 - 10;
+    
+    newX = Math.max(-maxX, Math.min(maxX, newX));
+    newY = Math.max(-maxY, Math.min(maxY, newY));
+    
+    floatingText.style.transform = `translate(calc(-50% + ${newX}px), calc(-50% + ${newY}px))`;
+    e.preventDefault();
+  }
+  
+  function endDrag() {
+    isDragging = false;
+    floatingText.style.transition = '';
+  }
+  
+  floatingText.addEventListener('mousedown', startDrag);
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', endDrag);
+  
+  floatingText.addEventListener('touchstart', startDrag, { passive: false });
+  document.addEventListener('touchmove', onDrag, { passive: false });
+  document.addEventListener('touchend', endDrag);
+  
+})();
+</script>
+
+</body>
+</html>
