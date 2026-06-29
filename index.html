@@ -31,8 +31,8 @@
     top: 20px;
     right: 20px;
     z-index: 100;
-    width: 300px;
-    background: rgba(15, 20, 30, 0.55);
+    width: 280px;
+    background: rgba(15, 20, 30, 0.6);
     backdrop-filter: blur(20px) saturate(1.4);
     -webkit-backdrop-filter: blur(20px) saturate(1.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -45,6 +45,7 @@
   .control-panel.collapsed {
     width: 48px;
     height: 48px;
+    border-radius: 24px;
   }
   
   .control-panel.collapsed .panel-header h2,
@@ -68,7 +69,7 @@
   }
   
   .panel-header h2 {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.5px;
     background: linear-gradient(135deg, #7dd3fc, #a78bfa);
@@ -100,8 +101,8 @@
   }
   
   .panel-content {
-    padding: 16px;
-    max-height: 70vh;
+    padding: 14px 16px;
+    max-height: 65vh;
     overflow-y: auto;
     transition: opacity 0.2s 0.1s;
   }
@@ -120,7 +121,7 @@
   }
   
   .control-group {
-    margin-bottom: 18px;
+    margin-bottom: 14px;
   }
   
   .control-group:last-child {
@@ -131,19 +132,19 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 6px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.65);
   }
   
   .control-value {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     color: #7dd3fc;
     background: rgba(125, 211, 252, 0.1);
-    padding: 2px 8px;
-    border-radius: 10px;
-    min-width: 36px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    min-width: 32px;
     text-align: center;
   }
   
@@ -161,43 +162,42 @@
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     background: linear-gradient(135deg, #7dd3fc, #a78bfa);
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(125, 211, 252, 0.4);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 6px rgba(125, 211, 252, 0.4);
+    transition: transform 0.15s;
   }
   
   input[type="range"]::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-    box-shadow: 0 2px 12px rgba(125, 211, 252, 0.6);
+    transform: scale(1.15);
   }
   
   input[type="range"]::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     background: linear-gradient(135deg, #7dd3fc, #a78bfa);
     border-radius: 50%;
     cursor: pointer;
     border: none;
-    box-shadow: 0 2px 8px rgba(125, 211, 252, 0.4);
   }
   
   .upload-group {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    margin-bottom: 8px;
   }
   
   .upload-btn {
     flex: 1;
-    padding: 10px 12px;
-    font-size: 12px;
+    padding: 8px 10px;
+    font-size: 11px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.8);
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
@@ -205,15 +205,20 @@
   }
   
   .upload-btn:hover {
-    background: rgba(125, 211, 252, 0.15);
-    border-color: rgba(125, 211, 252, 0.3);
+    background: rgba(125, 211, 252, 0.12);
+    border-color: rgba(125, 211, 252, 0.25);
     color: #7dd3fc;
   }
   
-  .reset-btn {
-    width: 100%;
-    padding: 10px;
-    font-size: 12px;
+  .action-group {
+    display: flex;
+    gap: 6px;
+  }
+  
+  .action-btn {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 11px;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.6);
     background: transparent;
@@ -221,12 +226,21 @@
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
   }
   
-  .reset-btn:hover {
+  .action-btn:hover {
     color: rgba(255, 255, 255, 0.9);
     border-color: rgba(255, 255, 255, 0.2);
     background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .action-btn svg {
+    width: 14px;
+    height: 14px;
   }
   
   #fileInput, #videoInput {
@@ -239,14 +253,14 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 50;
-    padding: 32px 48px;
-    background: rgba(15, 20, 30, 0.4);
+    padding: 28px 40px;
+    background: rgba(15, 20, 30, 0.35);
     backdrop-filter: blur(16px) saturate(1.3);
     -webkit-backdrop-filter: blur(16px) saturate(1.3);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
     cursor: grab;
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
     transition: box-shadow 0.3s;
     max-width: 90vw;
   }
@@ -256,14 +270,14 @@
   }
   
   .floating-text:hover {
-    box-shadow: 0 12px 50px rgba(125, 211, 252, 0.15);
+    box-shadow: 0 12px 50px rgba(125, 211, 252, 0.12);
   }
   
   .floating-text h1 {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
     letter-spacing: -0.5px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     background: linear-gradient(135deg, #ffffff 0%, #7dd3fc 50%, #a78bfa 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -272,26 +286,26 @@
   }
   
   .floating-text p {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.6);
-    line-height: 1.6;
-    max-width: 400px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.55;
+    max-width: 360px;
   }
   
   .drag-hint {
     position: absolute;
-    top: 10px;
-    right: 12px;
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.3);
+    top: 8px;
+    right: 10px;
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.25);
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
   }
   
   .drag-hint svg {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
   }
   
   .status-bar {
@@ -300,31 +314,37 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 50;
-    padding: 8px 16px;
-    background: rgba(15, 20, 30, 0.4);
+    padding: 6px 14px;
+    background: rgba(15, 20, 30, 0.35);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px;
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.45);
     display: flex;
-    gap: 16px;
+    gap: 12px;
     align-items: center;
+    transition: opacity 0.3s;
+  }
+  
+  .status-bar.hidden {
+    opacity: 0;
+    pointer-events: none;
   }
   
   .status-item {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
   }
   
   .status-dot {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: #4ade80;
-    box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+    box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
   }
   
   .error-overlay {
@@ -333,12 +353,12 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 200;
-    padding: 24px 32px;
+    padding: 20px 28px;
     background: rgba(220, 38, 38, 0.9);
     backdrop-filter: blur(10px);
     border-radius: 12px;
     color: white;
-    font-size: 14px;
+    font-size: 13px;
     display: none;
     max-width: 80vw;
   }
@@ -348,39 +368,39 @@
   }
   
   .error-overlay h3 {
-    margin-bottom: 8px;
-    font-size: 16px;
+    margin-bottom: 6px;
+    font-size: 14px;
   }
   
   .error-overlay pre {
     background: rgba(0, 0, 0, 0.3);
-    padding: 12px;
+    padding: 10px;
     border-radius: 6px;
-    font-size: 11px;
+    font-size: 10px;
     white-space: pre-wrap;
     word-break: break-all;
-    max-height: 200px;
+    max-height: 150px;
     overflow-y: auto;
   }
   
   @media (max-width: 640px) {
     .control-panel {
-      width: calc(100% - 40px);
-      top: 10px;
-      right: 10px;
-      left: 10px;
+      width: calc(100% - 32px);
+      top: 8px;
+      right: 8px;
+      left: 8px;
     }
     
     .floating-text {
-      padding: 24px 32px;
+      padding: 20px 28px;
     }
     
     .floating-text h1 {
-      font-size: 24px;
+      font-size: 22px;
     }
     
     .floating-text p {
-      font-size: 12px;
+      font-size: 11px;
     }
   }
 </style>
@@ -407,25 +427,25 @@
     <div class="control-group">
       <div class="control-label">
         <span>雨势强度</span>
-        <span class="control-value" id="rainValue">0.70</span>
+        <span class="control-value" id="rainValue">0.65</span>
       </div>
-      <input type="range" id="rainIntensity" min="0" max="1" step="0.01" value="0.7">
+      <input type="range" id="rainIntensity" min="0" max="1" step="0.01" value="0.65">
     </div>
     
     <div class="control-group">
       <div class="control-label">
         <span>雾气浓度</span>
-        <span class="control-value" id="fogValue">0.35</span>
+        <span class="control-value" id="fogValue">0.40</span>
       </div>
-      <input type="range" id="fogDensity" min="0" max="1" step="0.01" value="0.35">
+      <input type="range" id="fogDensity" min="0" max="1" step="0.01" value="0.40">
     </div>
     
     <div class="control-group">
       <div class="control-label">
-        <span>折射率</span>
-        <span class="control-value" id="refractValue">1.20</span>
+        <span>折射强度</span>
+        <span class="control-value" id="refractValue">1.00</span>
       </div>
-      <input type="range" id="refraction" min="0.2" max="2.5" step="0.01" value="1.2">
+      <input type="range" id="refraction" min="0.1" max="2.0" step="0.01" value="1.0">
     </div>
     
     <div class="control-group">
@@ -433,7 +453,7 @@
         <span>雨滴大小</span>
         <span class="control-value" id="sizeValue">1.00</span>
       </div>
-      <input type="range" id="dropSize" min="0.3" max="2.5" step="0.01" value="1.0">
+      <input type="range" id="dropSize" min="0.4" max="2.0" step="0.01" value="1.0">
     </div>
     
     <div class="control-group">
@@ -441,15 +461,15 @@
         <span>下落速度</span>
         <span class="control-value" id="speedValue">1.00</span>
       </div>
-      <input type="range" id="fallSpeed" min="0" max="3" step="0.01" value="1.0">
+      <input type="range" id="fallSpeed" min="0" max="2.5" step="0.01" value="1.0">
     </div>
     
     <div class="control-group">
       <div class="control-label">
-        <span>背景流体</span>
-        <span class="control-value" id="fluidValue">1.00</span>
+        <span>背景流动</span>
+        <span class="control-value" id="fluidValue">0.80</span>
       </div>
-      <input type="range" id="fluidSpeed" min="0" max="2" step="0.01" value="1.0">
+      <input type="range" id="fluidSpeed" min="0" max="2" step="0.01" value="0.8">
     </div>
     
     <div class="control-group">
@@ -464,7 +484,23 @@
       <input type="file" id="videoInput" accept="video/*">
     </div>
     
-    <button class="reset-btn" id="resetBtn">重置默认效果</button>
+    <div class="control-group">
+      <div class="action-group">
+        <button class="action-btn" id="fullscreenBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+          </svg>
+          全屏
+        </button>
+        <button class="action-btn" id="resetBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+          重置
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -476,13 +512,13 @@
       <path d="M15 19l-3 3-3-3"></path>
       <path d="M19 9l3 3-3 3"></path>
     </svg>
-    拖拽移动
+    拖拽
   </div>
   <h1>Heartfelt 雨滴</h1>
-  <p>WebGL2 实时玻璃雨滴折射效果，灵感来自 Shadertoy 经典作品。调节右侧控制面板参数，或上传图片/视频替换背景。</p>
+  <p>WebGL2 实时玻璃雨滴折射效果。调节右侧控制面板参数，或上传图片/视频替换背景。雾气浓度增加时会出现水痕效果。</p>
 </div>
 
-<div class="status-bar">
+<div class="status-bar" id="statusBar">
   <div class="status-item">
     <span class="status-dot"></span>
     <span id="statusText">初始化中...</span>
@@ -524,6 +560,10 @@
     return fract(p.x * p.y);
   }
   
+  float hash11(float n) {
+    return fract(sin(n) * 43758.5453);
+  }
+  
   float noise(vec2 p) {
     vec2 i = floor(p);
     vec2 f = fract(p);
@@ -538,38 +578,64 @@
   float fbm(vec2 p) {
     float v = 0.0;
     float a = 0.5;
-    for (int i = 0; i < 4; i++) {
+    mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
+    for (int i = 0; i < 5; i++) {
       v += a * noise(p);
-      p *= 2.0;
+      p = rot * p * 2.0;
       a *= 0.5;
     }
     return v;
   }
   
   vec3 fluidBackground(vec2 uv, float t) {
-    float time = t * 0.15 * uFluidSpeed;
-    vec2 p = uv * 2.5;
+    float time = t * 0.12 * uFluidSpeed;
+    vec2 p = uv * 2.2;
     
-    float n1 = fbm(p + vec2(time * 0.3, time * 0.2));
-    float n2 = fbm(p * 1.5 + vec2(-time * 0.2, time * 0.4) + n1 * 2.0);
-    float combined = (n1 + n2 * 0.6) / 1.6;
+    float n1 = fbm(p + vec2(time * 0.25, time * 0.18));
+    float n2 = fbm(p * 1.3 + vec2(-time * 0.18, time * 0.35) + n1 * 1.8);
+    float n3 = fbm(p * 1.8 + vec2(time * 0.08, -time * 0.25) + n2 * 1.2);
+    float combined = (n1 + n2 * 0.55 + n3 * 0.25) / 1.8;
     
-    vec3 c1 = vec3(0.04, 0.06, 0.12);
-    vec3 c2 = vec3(0.08, 0.2, 0.4);
-    vec3 c3 = vec3(0.25, 0.45, 0.7);
-    vec3 c4 = vec3(0.5, 0.35, 0.75);
+    vec3 c1 = vec3(0.03, 0.05, 0.10);
+    vec3 c2 = vec3(0.06, 0.15, 0.32);
+    vec3 c3 = vec3(0.18, 0.38, 0.62);
+    vec3 c4 = vec3(0.42, 0.30, 0.65);
     
-    vec3 col = mix(c1, c2, smoothstep(0.2, 0.5, combined));
-    col = mix(col, c3, smoothstep(0.4, 0.7, combined));
-    col = mix(col, c4, smoothstep(0.6, 0.9, combined));
+    vec3 col = mix(c1, c2, smoothstep(0.15, 0.45, combined));
+    col = mix(col, c3, smoothstep(0.35, 0.65, combined));
+    col = mix(col, c4, smoothstep(0.55, 0.85, combined));
     
-    float glow = pow(max(0.0, combined - 0.5), 2.0) * 0.4;
-    col += vec3(0.3, 0.5, 0.8) * glow;
+    float glow = pow(max(0.0, combined - 0.45), 2.5) * 0.35;
+    col += vec3(0.25, 0.45, 0.72) * glow;
+    
+    col += (noise(uv * 50.0 + time) - 0.5) * 0.015;
     
     return col;
   }
   
-  vec2 getDrop(vec2 uv, float t, float scale, float density, float speed) {
+  float smoothDrop(vec2 uv, vec2 pos, float size, float aspect) {
+    vec2 d = uv - pos;
+    d.x *= aspect;
+    float r = length(d);
+    
+    float coreRadius = size * 0.55;
+    float softRadius = size;
+    
+    if (r > softRadius) return 0.0;
+    
+    float core = 1.0 - smoothstep(0.0, coreRadius, r);
+    float soft = smoothstep(softRadius, softRadius * 0.4, r);
+    
+    float shape = core * 0.6 + soft * 0.4;
+    shape *= smoothstep(softRadius, coreRadius, r);
+    
+    float height = sqrt(max(0.0, 1.0 - r / softRadius * r / softRadius));
+    height = pow(height, 1.2);
+    
+    return height * shape;
+  }
+  
+  float getDropHeight(vec2 uv, float t, float scale, float density, float speed, float aspect) {
     vec2 p = uv * scale;
     p.y += t * speed * uFallSpeed;
     
@@ -577,74 +643,92 @@
     vec2 id = floor(p);
     
     float n = hash21(id);
-    
-    if (n > density) return vec2(0.0);
+    if (n > density) return 0.0;
     
     vec2 offset = vec2(
       hash21(id * 3.7) - 0.5,
       hash21(id * 5.3) - 0.5
-    ) * 0.6;
+    ) * 0.45;
+    
+    float phase = hash21(id * 7.1);
+    float dropY = (fract(t * 0.35 + phase * 8.0) - 0.5) * 0.7;
     
     vec2 pos = gv - offset;
-    pos.y += (fract(t * 0.5 + n * 5.0) - 0.5) * 0.8;
+    pos.y += dropY;
     pos = fract(pos + 0.5) - 0.5;
     
-    float size = mix(0.15, 0.38, hash21(id * 7.1)) * uDropSize;
-    float d = length(pos);
+    float baseSize = mix(0.12, 0.32, hash21(id * 9.5)) * uDropSize;
     
-    if (d > size) return vec2(0.0);
+    float sizeWobble = sin(t * 1.5 + id.x * 5.0 + id.y * 3.0) * 0.08;
+    float dropSizeVar = baseSize + sizeWobble;
     
-    float nd = d / size;
-    float height = sqrt(1.0 - nd * nd);
+    float h = smoothDrop(pos, vec2(0.0), dropSizeVar, aspect);
     
-    float wobble = sin(t * 2.0 + id.x * 10.0) * 0.04 * (1.0 - nd);
-    height += wobble * (1.0 - nd * nd);
-    
-    float mask = smoothstep(size, size * 0.6, d);
-    
-    float eps = 0.02;
-    float h = height;
-    float hx = sqrt(1.0 - min(1.0, (d + eps) / size * (d + eps) / size));
-    float hy = hx;
-    float nx = (h - hx) / eps * 0.5;
-    float ny = (h - hy) / eps * 0.5;
-    
-    float angle = atan(pos.y, pos.x);
-    float nxf = nx * cos(angle) - ny * sin(angle);
-    float nyf = nx * sin(angle) + ny * cos(angle);
-    
-    return vec2(mask * height, mask);
+    return h;
   }
   
-  vec3 getDropNormal(vec2 uv, float t, float scale, float density, float speed) {
-    float eps = 0.003;
-    vec2 c = getDrop(uv, t, scale, density, speed);
-    vec2 cx = getDrop(uv + vec2(eps, 0.0), t, scale, density, speed);
-    vec2 cy = getDrop(uv + vec2(0.0, eps), t, scale, density, speed);
+  vec2 getDropNormal(vec2 uv, float t, float scale, float density, float speed, float aspect) {
+    float eps = 0.004;
+    float h = getDropHeight(uv, t, scale, density, speed, aspect);
+    float hx = getDropHeight(uv + vec2(eps, 0.0), t, scale, density, speed, aspect);
+    float hy = getDropHeight(uv + vec2(0.0, eps), t, scale, density, speed, aspect);
     
-    if (c.y < 0.01) return vec3(0.0, 0.0, 1.0);
+    if (h < 0.01) return vec2(0.0);
     
-    float h = c.x;
-    float hx = cx.x;
-    float hy = cy.x;
+    float nx = (h - hx) / eps;
+    float ny = (h - hy) / eps;
     
-    vec3 normal = normalize(vec3(
-      (h - hx) / eps * 0.5,
-      (h - hy) / eps * 0.5,
-      1.0
-    ));
-    
-    return normal * c.y;
+    return vec2(nx, ny) * h;
   }
   
-  float streakLayer(vec2 uv, float t, float scale, float speed) {
-    vec2 p = uv * vec2(scale * 0.5, scale);
-    p.y += t * speed * uFallSpeed;
-    p.x += sin(p.y * 2.0) * 0.15;
+  float waterStreak(vec2 uv, float t, float scale, float intensity) {
+    vec2 p = uv * scale;
+    float seed = hash21(floor(p));
     
-    float n = fbm(p * 3.0);
-    float s = pow(n, 4.0) * 0.12;
-    return s * uRainIntensity;
+    p.y += t * 0.15 * uFallSpeed * (0.8 + seed * 0.4);
+    p.x += sin(p.y * 1.5 + seed * 10.0) * 0.08;
+    
+    vec2 gv = fract(p) - 0.5;
+    vec2 id = floor(p);
+    
+    float n = hash21(id);
+    if (n > intensity * 0.7) return 0.0;
+    
+    float width = 0.06 + hash21(id * 2.3) * 0.04;
+    float streakX = (hash21(id * 4.1) - 0.5) * 0.6;
+    
+    float dx = abs(gv.x - streakX);
+    if (dx > width) return 0.0;
+    
+    float fadeY = smoothstep(0.5, 0.2, abs(gv.y));
+    float fadeX = smoothstep(width, width * 0.3, dx);
+    
+    float streak = fadeY * fadeX;
+    
+    float flow = noise(vec2(gv.y * 8.0 + seed * 5.0, t * 2.0 + id.x));
+    streak *= smoothstep(0.3, 0.7, flow);
+    
+    return streak * 0.6;
+  }
+  
+  float waterTrace(vec2 uv, float t, float fogDensity) {
+    float intensity = fogDensity * 1.5;
+    if (intensity < 0.1) return 0.0;
+    
+    float trace = 0.0;
+    
+    trace += waterStreak(uv, t, 3.0, intensity) * 1.0;
+    trace += waterStreak(uv, t, 6.0, intensity * 0.8) * 0.6;
+    trace += waterStreak(uv, t, 12.0, intensity * 0.6) * 0.35;
+    trace += waterStreak(uv, t, 24.0, intensity * 0.4) * 0.2;
+    
+    trace *= fogDensity;
+    
+    float drip = noise(uv * 40.0 + vec2(t * 0.5, 0.0));
+    drip = smoothstep(0.65, 0.85, drip) * smoothstep(0.85, 0.65, drip);
+    trace += drip * fogDensity * 0.15 * uRainIntensity;
+    
+    return trace;
   }
   
   void main() {
@@ -653,35 +737,40 @@
     vec2 suv = vec2(uv.x * aspect, uv.y);
     float t = uTime;
     
-    vec3 totalNormal = vec3(0.0, 0.0, 0.0);
-    float totalMask = 0.0;
+    vec2 normalAccum = vec2(0.0);
+    float heightAccum = 0.0;
     
-    vec3 n1 = getDropNormal(suv, t, 6.0, 0.35 * uRainIntensity, 0.8);
-    totalNormal += n1;
-    totalMask += n1.z;
+    vec2 n1 = getDropNormal(suv, t, 5.0, 0.32 * uRainIntensity, 0.7, aspect);
+    normalAccum += n1;
+    heightAccum += length(n1);
     
-    vec3 n2 = getDropNormal(suv, t, 10.0, 0.25 * uRainIntensity, 1.2);
-    totalNormal += n2 * 0.6;
-    totalMask += n2.z * 0.6;
+    vec2 n2 = getDropNormal(suv, t, 9.0, 0.22 * uRainIntensity, 1.0, aspect);
+    normalAccum += n2 * 0.55;
+    heightAccum += length(n2) * 0.55;
     
-    vec3 n3 = getDropNormal(suv, t, 16.0, 0.2 * uRainIntensity, 0.5);
-    totalNormal += n3 * 0.3;
-    totalMask += n3.z * 0.3;
+    vec2 n3 = getDropNormal(suv, t, 15.0, 0.15 * uRainIntensity, 0.45, aspect);
+    normalAccum += n3 * 0.28;
+    heightAccum += length(n3) * 0.28;
     
-    if (totalMask > 0.001) {
-      totalNormal = normalize(totalNormal);
-    } else {
-      totalNormal = vec3(0.0, 0.0, 1.0);
+    vec2 n4 = getDropNormal(suv, t, 25.0, 0.10 * uRainIntensity, 0.25, aspect);
+    normalAccum += n4 * 0.15;
+    heightAccum += length(n4) * 0.15;
+    
+    vec3 totalNormal = vec3(0.0, 0.0, 1.0);
+    if (heightAccum > 0.005) {
+      vec2 nn = normalAccum / heightAccum;
+      totalNormal = normalize(vec3(nn.x, nn.y, 1.0));
     }
     
-    float streakMask = streakLayer(suv, t, 2.0, 0.6);
-    streakMask += streakLayer(suv, t, 4.0, 1.0) * 0.5;
+    float dropIntensity = smoothstep(0.0, 0.25, heightAccum);
     
-    vec2 refractOffset = totalNormal.xy * uRefraction * 0.12;
-    refractOffset.y += streakMask * 0.025 * uRefraction;
+    float waterTrace = waterTrace(uv, t, uFogDensity);
+    
+    vec2 refractOffset = totalNormal.xy * uRefraction * 0.08;
+    refractOffset += vec2(waterTrace * 0.015 * uRefraction, waterTrace * 0.02 * uRefraction);
     
     vec2 bgUV = uv + refractOffset;
-    bgUV = clamp(bgUV, 0.0, 1.0);
+    bgUV = clamp(bgUV, 0.001, 0.999);
     
     vec3 bgColor;
     if (uUseBackground > 0.5) {
@@ -692,32 +781,44 @@
     
     vec3 col = bgColor;
     
-    float dropAmount = smoothstep(0.0, 0.3, totalMask);
+    float fresnel = pow(1.0 - max(0.0, totalNormal.z), 2.5);
+    vec3 highlightColor = vec3(0.88, 0.94, 1.0);
+    col += highlightColor * fresnel * 0.28 * dropIntensity;
     
-    float fresnel = pow(1.0 - max(0.0, totalNormal.z), 3.0);
-    col += vec3(0.9, 0.95, 1.0) * fresnel * 0.35 * dropAmount;
+    vec3 lightDir = normalize(vec3(0.35, 0.65, 1.0));
+    float spec = pow(max(0.0, dot(totalNormal, lightDir)), 55.0);
+    col += vec3(1.0, 0.97, 0.93) * spec * 0.45 * dropIntensity;
     
-    vec3 lightDir = normalize(vec3(0.4, 0.7, 1.0));
-    float spec = pow(max(0.0, dot(totalNormal, lightDir)), 40.0);
-    col += vec3(1.0, 0.98, 0.95) * spec * 0.5 * dropAmount;
+    float softSpec = pow(max(0.0, dot(totalNormal, lightDir)), 8.0);
+    col += vec3(0.7, 0.85, 1.0) * softSpec * 0.08 * dropIntensity;
     
-    float ambient = (1.0 - totalNormal.z) * 0.12;
-    col += vec3(0.7, 0.8, 0.95) * ambient * dropAmount;
+    float ambient = (1.0 - totalNormal.z) * 0.08;
+    col += vec3(0.65, 0.75, 0.92) * ambient * dropIntensity;
     
-    float fogAmt = uFogDensity * 0.4 + streakMask * 0.25;
-    vec3 fogColor = vec3(0.06, 0.08, 0.12);
-    col = mix(col, fogColor, fogAmt);
+    float traceBright = waterTrace * 0.12;
+    col += vec3(0.55, 0.7, 0.9) * traceBright;
     
-    float fogNoise = fbm(uv * 1.5 + vec2(t * 0.03, t * 0.02));
-    col = mix(col, vec3(0.08, 0.1, 0.16), fogNoise * uFogDensity * 0.25);
+    float traceDark = waterTrace * 0.18;
+    col = mix(col, vec3(0.04, 0.06, 0.12), traceDark);
     
-    float vig = 1.0 - 0.25 * length(uv - 0.5) * 1.414;
+    float fogAmt = uFogDensity * 0.35;
+    fogAmt += waterTrace * 0.2;
+    fogAmt += dropIntensity * 0.05 * uFogDensity;
+    vec3 fogColor = vec3(0.04, 0.06, 0.10);
+    col = mix(col, fogColor, clamp(fogAmt, 0.0, 0.75));
+    
+    float fogNoise = fbm(uv * 1.2 + vec2(t * 0.02, t * 0.015));
+    col = mix(col, vec3(0.06, 0.08, 0.14), fogNoise * uFogDensity * 0.2);
+    
+    float vig = 1.0 - pow(length(uv - 0.5) * 1.35, 2.0) * 0.22;
     col *= vig;
     
-    col = pow(col, vec3(0.95));
+    col = pow(col, vec3(0.96));
     
-    float grain = hash21(uv * uResolution.xy + t * 0.1) * 0.02;
+    float grain = (hash21(uv * uResolution.xy + fract(t * 0.08)) - 0.5) * 0.018;
     col += grain;
+    
+    col = clamp(col, 0.0, 1.0);
     
     fragColor = vec4(col, 1.0);
   }
@@ -732,13 +833,14 @@
   const errorMessage = document.getElementById('errorMessage');
   const statusText = document.getElementById('statusText');
   const statusDot = document.querySelector('.status-dot');
+  const statusBar = document.getElementById('statusBar');
   
   function showError(msg) {
     errorOverlay.classList.add('show');
     errorMessage.textContent = msg;
     statusText.textContent = '渲染错误';
     statusDot.style.background = '#ef4444';
-    statusDot.style.boxShadow = '0 0 8px rgba(239, 68, 68, 0.5)';
+    statusDot.style.boxShadow = '0 0 6px rgba(239, 68, 68, 0.5)';
     console.error(msg);
   }
   
@@ -761,12 +863,12 @@
   }
   
   const params = {
-    rainIntensity: 0.7,
-    fogDensity: 0.35,
-    refraction: 1.2,
+    rainIntensity: 0.65,
+    fogDensity: 0.40,
+    refraction: 1.0,
     dropSize: 1.0,
     fallSpeed: 1.0,
-    fluidSpeed: 1.0,
+    fluidSpeed: 0.8,
     useBackground: 0.0
   };
   
@@ -876,9 +978,7 @@
       gl.bindTexture(gl.TEXTURE_2D, bgTexture);
       try {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, videoElement);
-      } catch (e) {
-        // 视频帧可能还没准备好，忽略
-      }
+      } catch (e) {}
     }
   }
   
@@ -1007,14 +1107,10 @@
         bgTexture = createTexture(img);
         params.useBackground = 1.0;
       };
-      img.onerror = () => {
-        showError('图片加载失败');
-      };
+      img.onerror = () => showError('图片加载失败');
       img.src = event.target.result;
     };
-    reader.onerror = () => {
-      showError('文件读取失败');
-    };
+    reader.onerror = () => showError('文件读取失败');
     reader.readAsDataURL(file);
   });
   
@@ -1049,6 +1145,54 @@
       showError('视频加载失败');
       URL.revokeObjectURL(url);
     });
+  });
+  
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
+  let isFullscreen = false;
+  
+  fullscreenBtn.addEventListener('click', () => {
+    if (!isFullscreen) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+      } else if (document.documentElement.webkitRequestFullscreen) {
+        document.documentElement.webkitRequestFullscreen();
+      }
+      isFullscreen = true;
+      fullscreenBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3v3a2 2 0 0 1-2 2H3m21 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
+        </svg>
+        退出
+      `;
+      statusBar.classList.add('hidden');
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+      isFullscreen = false;
+      fullscreenBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+        </svg>
+        全屏
+      `;
+      statusBar.classList.remove('hidden');
+    }
+  });
+  
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) {
+      isFullscreen = false;
+      fullscreenBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+        </svg>
+        全屏
+      `;
+      statusBar.classList.remove('hidden');
+    }
   });
   
   document.getElementById('resetBtn').addEventListener('click', () => {
@@ -1111,8 +1255,8 @@
     let newX = pos.x - window.innerWidth / 2 - dragOffsetX;
     let newY = pos.y - window.innerHeight / 2 - dragOffsetY;
     
-    const maxX = window.innerWidth / 2 - rect.width / 2 - 10;
-    const maxY = window.innerHeight / 2 - rect.height / 2 - 10;
+    const maxX = window.innerWidth / 2 - rect.width / 2 - 8;
+    const maxY = window.innerHeight / 2 - rect.height / 2 - 8;
     
     newX = Math.max(-maxX, Math.min(maxX, newX));
     newY = Math.max(-maxY, Math.min(maxY, newY));
