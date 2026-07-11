@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>灵感速记与大纲生成器</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #FAFAF7;
+      --bg-warm: #F5F4F0;
+      --bg-card: #FFFFFF;
+      --bg-sidebar: #F9F8F5;
+      --ink: #1A1A1A;
+      --ink-secondary: #4A4A4A;
+      --muted: #8C8C8C;
+      --muted-light: #B8B8B8;
+      --rule: #E8E6E1;
+      --rule-light: #F0EEEA;
+      --accent: #0D7C66;
+      --accent-light: #E8F5F1;
+      --accent-dark: #095E4D;
+      --accent-glow: rgba(13, 124, 102, 0.08);
+      --danger: #D94040;
+      --danger-light: #FFF0F0;
+      --warning: #D4920A;
+      --warning-light: #FFF8E8;
+      --success: #2D9D78;
+      --font-sans: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-display: 'Playfair Display', Georgia, serif;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+      --shadow-accent: 0 4px 20px rgba(13, 124, 102, 0.15);
+      --shadow-float: 0 -4px 30px rgba(0,0,0,0.06), 0 -1px 6px rgba(0,0,0,0.04);
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font-sans);
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.6;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ============================================
+       页面布局 — 三栏：历史(左) | 结果(中) | 输入(右下固定)
+    ============================================ */
+    .app-layout {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ============================================
+       顶部导航栏
+    ============================================ */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(250, 250, 247, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--rule-light);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: box-shadow var(--transition);
+    }
+    .top-nav.scrolled { box-shadow: var(--shadow-sm); }
+    .nav-brand { display: flex; align-items: center; gap: 0.75rem; }
+    .nav-logo {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 0.85rem; font-weight: 700; letter-spacing: -0.02em;
+    }
+    .nav-title { font-size: 1rem; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+    .nav-title span { color: var(--muted); font-weight: 400; font-size: 0.82rem; margin-left: 0.5rem; }
+    .nav-actions { display: flex; align-items: center; gap: 0.5rem; }
+    .nav-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 0.85rem;
+      border: 1px solid var(--rule); border-radius: var(--radius-sm);
+      font-size: 0.82rem; color: var(--ink-secondary); background: var(--bg-card);
+      cursor: pointer; transition: all var(--transition); font-family: var(--font-sans);
+    }
+    .nav-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    .nav-btn svg { width: 15px; height: 15px; }
+    .nav-btn-icon {
+      width: 34px; height: 34px; padding: 0; justify-content: center;
+      border: 1px solid var(--rule); border-radius: var(--radius-sm);
+      background: var(--bg-card); cursor: pointer; transition: all var(--transition);
+      display: flex; align-items: center; justify-content: center; color: var(--ink-secondary);
+    }
+    .nav-btn-icon:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    .nav-btn-icon svg { width: 16px; height: 16px; }
+
+    /* ============================================
+       主体内容区 — 三栏布局
+    ============================================ */
+    .main-content {
+      display: flex;
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem 2rem;
+      gap: 1.5rem;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* ============================================
+       F07: 左侧 — 灵感历史（可展开收起）
+    ============================================ */
+    .sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      overflow: hidden;
+      transition: width var(--transition-slow), opacity var(--transition);
+    }
+    .sidebar.collapsed {
+      width: 0;
+      opacity: 0;
+      padding: 0;
+      margin: 0;
+      overflow: hidden;
+    }
+    .sidebar.collapsed > * {
+      display: none;
+    }
+    .sidebar-toggle {
+      position: fixed;
+      left: 1rem;
+      top: 72px;
+      z-index: 90;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--ink-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+      box-shadow: var(--shadow-sm);
+    }
+    .sidebar-toggle:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-light);
+    }
+    .sidebar-toggle svg {
+      width: 16px;
+      height: 16px;
+      transition: transform var(--transition-slow);
+    }
+    .sidebar-toggle.collapsed svg {
+      transform: rotate(180deg);
+    }
+    .sidebar-header {
+      padding: 0.5rem 0 0.75rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .sidebar-title {
+      font-size: 0.88rem; font-weight: 600; color: var(--ink);
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .sidebar-title .count {
+      font-size: 0.7rem; font-weight: 500; color: var(--accent);
+      background: var(--accent-light); padding: 0.1rem 0.4rem; border-radius: 999px;
+    }
+    .sidebar-actions { display: flex; gap: 0.25rem; }
+    .sidebar-action-btn {
+      width: 28px; height: 28px; border: none; background: none; cursor: pointer;
+      color: var(--muted); display: flex; align-items: center; justify-content: center;
+      border-radius: var(--radius-sm); transition: all var(--transition);
+    }
+    .sidebar-action-btn:hover { color: var(--ink); background: var(--bg-warm); }
+    .sidebar-action-btn svg { width: 15px; height: 15px; }
+
+    .sidebar-search { padding-bottom: 0.75rem; }
+    .search-input-wrap { position: relative; }
+    .search-input-wrap svg {
+      position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%);
+      width: 14px; height: 14px; color: var(--muted);
+    }
+    .search-input {
+      width: 100%; padding: 0.45rem 0.65rem 0.45rem 2rem;
+      border: 1px solid var(--rule); border-radius: var(--radius-sm);
+      font-size: 0.8rem; font-family: var(--font-sans); color: var(--ink);
+      background: var(--bg-card); outline: none; transition: all var(--transition);
+    }
+    .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .search-input::placeholder { color: var(--muted-light); }
+
+    .history-list { flex: 1; overflow-y: auto; overflow-x: hidden; }
+    .history-list::-webkit-scrollbar { width: 6px; }
+    .history-list::-webkit-scrollbar-track { background: var(--bg-warm); border-radius: 3px; }
+    .history-list::-webkit-scrollbar-thumb { background: var(--muted-light); border-radius: 3px; }
+    .history-list::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    .history-card {
+      padding: 0.75rem; border: 1px solid var(--rule-light); border-radius: var(--radius-md);
+      margin-bottom: 0.5rem; cursor: pointer; transition: all var(--transition); background: var(--bg-card);
+    }
+    .history-card:hover { border-color: var(--accent); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+    .history-card.active { border-color: var(--accent); background: var(--accent-light); }
+    .history-card-title {
+      font-size: 0.82rem; font-weight: 600; color: var(--ink); margin-bottom: 0.25rem;
+      display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .history-card-meta {
+      font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 0.4rem;
+    }
+    .history-card-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--muted-light); }
+    .history-card-actions {
+      display: flex; gap: 0.25rem; margin-top: 0.4rem; opacity: 0; transition: opacity var(--transition);
+    }
+    .history-card:hover .history-card-actions { opacity: 1; }
+    .history-card-action {
+      font-size: 0.7rem; color: var(--muted); background: var(--bg-warm); border: none;
+      border-radius: 4px; padding: 0.15rem 0.4rem; cursor: pointer; font-family: var(--font-sans);
+      transition: all var(--transition);
+    }
+    .history-card-action:hover { color: var(--danger); background: var(--danger-light); }
+
+    .history-empty { text-align: center; padding: 2rem 1rem; color: var(--muted); }
+    .history-empty svg { width: 40px; height: 40px; margin-bottom: 0.75rem; opacity: 0.3; }
+    .history-empty p { font-size: 0.82rem; }
+    .history-empty small { font-size: 0.72rem; color: var(--muted-light); }
+
+    /* ============================================
+       右侧 — AI 整理结果 + 输入区 纵向排列
+    ============================================ */
+    .right-area {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      overflow: hidden;
+    }
+
+    /* ====== F05 + F08: 输出区 ====== */
+    .output-section {
+      background: var(--bg-card); border: 1px solid var(--rule); border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm); overflow: hidden;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    /* 侧边栏收起时，输出区更宽 */
+    .sidebar.collapsed + .right-area .output-section,
+    .sidebar.collapsed ~ .right-area .output-section {
+      max-width: 100%;
+    }
+    .output-header {
+      padding: 1rem 1.25rem 0; display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .output-label {
+      font-size: 0.82rem; font-weight: 600; color: var(--ink);
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .output-label .tag {
+      font-size: 0.68rem; font-weight: 500; color: var(--accent); background: var(--accent-light);
+      padding: 0.15rem 0.5rem; border-radius: 999px;
+    }
+    .output-tabs {
+      display: flex; gap: 0;
+      flex-shrink: 0;
+    }
+    .output-actions .output-tabs {
+      padding: 0;
+      margin-top: 0;
+      border-bottom: none;
+    }
+    .output-tab {
+      padding: 0.5rem 0.85rem; font-size: 0.78rem; color: var(--muted);
+      border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer;
+      transition: all var(--transition); font-family: var(--font-sans); background: none;
+      font-weight: 500;
+      display: flex; align-items: center; gap: 0.35rem;
+    }
+    .output-tab:hover { color: var(--ink-secondary); background: var(--bg-warm); border-color: var(--rule); }
+    .output-tab.active { color: var(--accent); background: var(--accent-light); border-color: var(--accent); font-weight: 600; }
+    .output-tab svg { width: 14px; height: 14px; }
+    .output-body { padding: 0; flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; position: relative; }
+    .output-body::-webkit-scrollbar { width: 6px; }
+    .output-body::-webkit-scrollbar-track { background: var(--bg-warm); border-radius: 3px; }
+    .output-body::-webkit-scrollbar-thumb { background: var(--muted-light); border-radius: 3px; }
+    .output-body::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+    .output-panel { display: none; animation: fadeIn 0.25s ease-out; }
+    .output-panel.active { display: block; }
+    .output-panel > div { padding: 1.25rem; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* 文章大纲 */
+    .outline-content h1 {
+      font-size: 1.15rem; font-weight: 700; color: var(--ink); margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent);
+    }
+    .outline-content h2 {
+      font-size: 1rem; font-weight: 600; color: var(--ink); margin-top: 1rem; margin-bottom: 0.4rem;
+      padding-left: 0.5rem; border-left: 3px solid var(--accent);
+    }
+    .outline-content h3 {
+      font-size: 0.9rem; font-weight: 500; color: var(--ink-secondary); margin-top: 0.6rem;
+      margin-bottom: 0.3rem; padding-left: 1rem;
+    }
+    .outline-content p { font-size: 0.85rem; color: var(--muted); padding-left: 1rem; margin-bottom: 0.3rem; }
+
+    /* 待办清单 */
+    .todo-content .todo-item {
+      display: flex; align-items: flex-start; gap: 0.6rem;
+      padding: 0.65rem 0.75rem; border-radius: var(--radius-sm); margin-bottom: 0.4rem;
+      transition: background var(--transition);
+    }
+    .todo-content .todo-item:hover { background: var(--bg-warm); }
+    .todo-checkbox {
+      width: 18px; height: 18px; border: 2px solid var(--rule); border-radius: 4px;
+      flex-shrink: 0; margin-top: 2px; cursor: pointer; transition: all var(--transition);
+    }
+    .todo-checkbox:hover { border-color: var(--accent); }
+    .todo-checkbox.checked { background: var(--accent); border-color: var(--accent); }
+    .todo-checkbox.checked::after {
+      content: ''; display: block; width: 5px; height: 9px;
+      border: solid #fff; border-width: 0 2px 2px 0;
+      transform: rotate(45deg); margin: 1px auto;
+    }
+    .todo-text { flex: 1; font-size: 0.88rem; color: var(--ink); }
+    .todo-text.done { text-decoration: line-through; color: var(--muted); }
+    .todo-priority {
+      font-size: 0.68rem; font-weight: 600; padding: 0.1rem 0.4rem; border-radius: 4px; flex-shrink: 0;
+    }
+    .todo-priority.p0 { color: var(--danger); background: var(--danger-light); }
+    .todo-priority.p1 { color: var(--warning); background: var(--warning-light); }
+    .todo-priority.p2 { color: var(--accent); background: var(--accent-light); }
+
+    /* 脑图 */
+    .mindmap-content {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 300px; padding: 1rem;
+    }
+    .mindmap-content svg { max-width: 100%; height: auto; }
+
+    /* 会议纪要 */
+    .meeting-content .meeting-block { margin-bottom: 1.25rem; }
+    .meeting-block-title {
+      font-size: 0.82rem; font-weight: 600; color: var(--accent); text-transform: uppercase;
+      letter-spacing: 0.04em; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;
+    }
+    .meeting-block-title::after { content: ''; flex: 1; height: 1px; background: var(--rule-light); }
+    .meeting-item {
+      font-size: 0.88rem; color: var(--ink-secondary); padding: 0.4rem 0; padding-left: 1rem;
+      border-left: 2px solid var(--rule-light); margin-bottom: 0.3rem;
+    }
+    .meeting-item strong { color: var(--ink); }
+
+    /* F06: 输出操作栏 */
+    .output-actions {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.75rem 1.25rem; border-top: 1px solid var(--rule-light);
+      background: var(--bg-warm); flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .action-btn {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.4rem 0.85rem; border: 1px solid var(--rule); border-radius: var(--radius-sm);
+      font-size: 0.78rem; color: var(--ink-secondary); background: var(--bg-card);
+      cursor: pointer; transition: all var(--transition); font-family: var(--font-sans);
+    }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    .action-btn--primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .action-btn--primary:hover { background: var(--accent-dark); color: #fff; }
+    .action-btn svg { width: 14px; height: 14px; }
+    .action-btn.copied { color: var(--success); border-color: var(--success); }
+
+    /* ============================================
+       输入区 — 占满右侧下方，比例约 1:3
+    ============================================ */
+    .input-section {
+      background: var(--bg-card);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: visible;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      flex-shrink: 0;
+    }
+    .input-section:focus-within {
+      border-color: var(--accent);
+      box-shadow: var(--shadow-accent), var(--shadow-sm);
+    }
+    .input-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 1rem 0;
+    }
+    .input-label {
+      font-size: 0.78rem; font-weight: 600; color: var(--ink);
+      display: flex; align-items: center; gap: 0.35rem;
+    }
+    .input-label .tag {
+      font-size: 0.65rem; font-weight: 500; color: var(--accent);
+      background: var(--accent-light); padding: 0.1rem 0.4rem; border-radius: 999px;
+    }
+    .input-hint { font-size: 0.72rem; color: var(--muted); }
+    .input-file-bar {
+      display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;
+      padding: 0.35rem 1rem 0;
+    }
+    .input-textarea {
+      width: 100%; min-height: 48px; max-height: 100px;
+      border: none; outline: none; resize: vertical;
+      font-family: var(--font-sans); font-size: 0.9rem; line-height: 1.7;
+      color: var(--ink); background: transparent; padding: 0.35rem 1rem;
+    }
+    .input-textarea::placeholder { color: var(--muted-light); }
+    .input-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.5rem 1rem 0.75rem;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* 工具栏 */
+    .toolbar-inline {
+      display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;
+    }
+    .tool-btn-sm {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.35rem 0.7rem; border: 1px solid var(--rule); border-radius: var(--radius-sm);
+      font-size: 0.75rem; color: var(--ink-secondary); background: var(--bg-card);
+      cursor: pointer; transition: all var(--transition); font-family: var(--font-sans);
+      white-space: nowrap;
+    }
+    .tool-btn-sm:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    .tool-btn-sm svg { width: 13px; height: 13px; flex-shrink: 0; }
+    .tool-btn-sm--mic {
+      border-color: var(--danger); color: var(--danger); background: var(--danger-light);
+    }
+    .tool-btn-sm--mic:hover { background: var(--danger); color: #fff; }
+    .tool-btn-sm--mic.recording {
+      background: var(--danger); color: #fff;
+      animation: mic-pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes mic-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(217, 64, 64, 0.3); }
+      50% { box-shadow: 0 0 0 8px rgba(217, 64, 64, 0); }
+    }
+    .mic-dot-sm {
+      width: 5px; height: 5px; border-radius: 50%; background: var(--danger);
+    }
+    .tool-btn-sm--mic.recording .mic-dot-sm { animation: dot-blink 0.8s ease-in-out infinite; }
+    @keyframes dot-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .input-stats {
+      font-size: 0.72rem; color: var(--muted); white-space: nowrap;
+    }
+
+    /* 展开式文件菜单 */
+    .file-menu-toggle {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.35rem 0.7rem; border: 1px solid var(--rule); border-radius: var(--radius-sm);
+      font-size: 0.75rem; color: var(--ink-secondary); background: var(--bg-card);
+      cursor: pointer; transition: all var(--transition); font-family: var(--font-sans);
+    }
+    .file-menu-toggle:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    .file-menu-toggle svg { width: 13px; height: 13px; transition: transform var(--transition); }
+    .file-menu-toggle.expanded svg { transform: rotate(180deg); }
+
+    .file-menu-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 180px;
+      padding: 0.4rem;
+      background: var(--bg-card);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      animation: menuSlideDown 0.2s ease-out;
+      z-index: 10;
+    }
+    .file-menu-dropdown.show { display: block; }
+    @keyframes menuSlideDown {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .file-menu-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.6rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.78rem;
+      color: var(--ink-secondary);
+      transition: all var(--transition);
+    }
+    .file-menu-item:hover { background: var(--bg-card); color: var(--accent); }
+    .file-menu-item svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* 生成按钮 */
+    .btn-generate-sm {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.5rem 1.25rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: #fff; border: none; border-radius: var(--radius-sm);
+      font-size: 0.82rem; font-weight: 600; cursor: pointer;
+      font-family: var(--font-sans); transition: all var(--transition);
+      box-shadow: var(--shadow-accent); position: relative; overflow: hidden;
+    }
+    .btn-generate-sm::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, transparent, rgba(255,255,255,0.15));
+      opacity: 0; transition: opacity var(--transition);
+    }
+    .btn-generate-sm:hover::before { opacity: 1; }
+    .btn-generate-sm:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(13, 124, 102, 0.25); }
+    .btn-generate-sm:active { transform: translateY(0); }
+    .btn-generate-sm:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-generate-sm svg { width: 15px; height: 15px; }
+    .btn-generate-sm .spinner-sm {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+      border-radius: 50%; animation: spin 0.8s linear infinite; display: none;
+    }
+    .btn-generate-sm.loading .spinner-sm { display: block; }
+    .btn-generate-sm.loading .btn-gen-icon { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 引用计数 */
+    .ref-count-sm {
+      font-size: 0.7rem; color: var(--muted); display: flex; align-items: center; gap: 0.25rem;
+    }
+    .ref-count-sm .dot-sm { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+
+    /* 引用资料卡片 */
+    .ref-card-sm {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 0.6rem; background: var(--bg-warm);
+      border: 1px solid var(--rule-light); border-radius: var(--radius-sm);
+      margin: 0 1rem 0.4rem; font-size: 0.75rem; color: var(--ink-secondary);
+    }
+    .ref-card-sm .ref-icon-sm {
+      width: 22px; height: 22px; border-radius: 4px;
+      background: var(--accent-light); display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .ref-card-sm .ref-icon-sm svg { width: 12px; height: 12px; color: var(--accent); }
+    .ref-card-sm .ref-info-sm { flex: 1; min-width: 0; }
+    .ref-card-sm .ref-name-sm { font-weight: 500; color: var(--ink); font-size: 0.75rem; }
+    .ref-card-sm .ref-meta-sm { font-size: 0.68rem; color: var(--muted); }
+    .ref-card-sm .ref-status-sm {
+      font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 999px; font-weight: 500;
+    }
+    .ref-card-sm .ref-status-sm.done { color: var(--success); background: #E8F8F2; }
+    .ref-card-sm .ref-status-sm.loading { color: var(--warning); background: var(--warning-light); }
+    .ref-card-sm .ref-remove-sm {
+      width: 20px; height: 20px; border: none; background: none; cursor: pointer;
+      color: var(--muted); display: flex; align-items: center; justify-content: center;
+      border-radius: 3px; transition: all var(--transition);
+    }
+    .ref-card-sm .ref-remove-sm:hover { color: var(--danger); background: var(--danger-light); }
+    .ref-card-sm .ref-remove-sm svg { width: 12px; height: 12px; }
+
+    /* ============================================
+       空状态
+    ============================================ */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 3rem 2rem; color: var(--muted); text-align: center;
+    }
+    .empty-state svg { width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.25; }
+    .empty-state p { font-size: 0.88rem; margin-bottom: 0.3rem; }
+    .empty-state small { font-size: 0.78rem; color: var(--muted-light); }
+
+    /* ============================================
+       骨架屏
+    ============================================ */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-warm) 25%, var(--rule-light) 50%, var(--bg-warm) 75%);
+      background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .skeleton-line { height: 12px; margin-bottom: 0.6rem; }
+    .skeleton-line.short { width: 40%; }
+    .skeleton-line.medium { width: 65%; }
+    .skeleton-line.long { width: 85%; }
+
+    /* ============================================
+       Toast 提示
+    ============================================ */
+    .toast-container {
+      position: fixed; top: 72px; right: 1.5rem; z-index: 1000;
+      display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .toast {
+      padding: 0.65rem 1rem; background: var(--ink); color: #fff;
+      border-radius: var(--radius-sm); font-size: 0.82rem;
+      box-shadow: var(--shadow-lg); animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.5s forwards;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .toast.success { background: var(--accent-dark); }
+    .toast.error { background: var(--danger); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+
+    /* ============================================
+       响应式
+    ============================================ */
+    @media (max-width: 1024px) {
+      .sidebar { width: 220px; }
+    }
+    @media (max-width: 860px) {
+      .main-content { flex-direction: column; padding: 1rem; }
+      .sidebar { width: 100%; max-height: 200px; border-bottom: 1px solid var(--rule); padding-bottom: 1rem; }
+      .sidebar.collapsed { width: 0; max-height: 0; border: none; padding: 0; margin: 0; }
+      .sidebar-toggle { display: none; }
+    }
+    @media (max-width: 600px) {
+      .top-nav { padding: 0 1rem; }
+      .nav-title span { display: none; }
+      .output-tabs { overflow-x: auto; }
+      .input-footer { flex-direction: column; align-items: stretch; }
+      .toolbar-inline { justify-content: center; }
+    }
+
+    /* ============================================
+       模态框
+    ============================================ */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+      z-index: 2000; display: none; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px); animation: modalFadeIn 0.2s ease;
+    }
+    .modal-overlay.show { display: flex; }
+    @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      background: var(--bg-card); border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg); width: 90%; max-width: 480px;
+      max-height: 85vh; overflow: hidden; animation: modalSlideIn 0.25s ease;
+      display: flex; flex-direction: column;
+    }
+    @keyframes modalSlideIn { from { opacity: 0; transform: translateY(-20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.25rem; border-bottom: 1px solid var(--rule-light);
+    }
+    .modal-title { font-size: 1rem; font-weight: 600; }
+    .modal-close {
+      width: 28px; height: 28px; border: none; background: none; cursor: pointer;
+      color: var(--muted); border-radius: var(--radius-sm); display: flex;
+      align-items: center; justify-content: center; transition: all var(--transition);
+    }
+    .modal-close:hover { color: var(--ink); background: var(--bg-warm); }
+    .modal-close svg { width: 16px; height: 16px; }
+
+    .modal-body {
+      padding: 1.25rem; overflow-y: auto; flex: 1;
+    }
+
+    .setting-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 0; border-bottom: 1px solid var(--rule-light);
+    }
+    .setting-item:last-child { border-bottom: none; }
+    .setting-label { font-size: 0.88rem; color: var(--ink-secondary); }
+    .setting-desc { font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
+
+    .toggle-switch {
+      width: 40px; height: 22px; border-radius: 11px; background: var(--rule);
+      cursor: pointer; position: relative; transition: background var(--transition);
+      flex-shrink: 0;
+    }
+    .toggle-switch.active { background: var(--accent); }
+    .toggle-switch::after {
+      content: ''; position: absolute; width: 18px; height: 18px;
+      border-radius: 50%; background: #fff; top: 2px; left: 2px;
+      transition: transform var(--transition); box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .toggle-switch.active::after { transform: translateX(18px); }
+
+    .shortcut-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.6rem 0; border-bottom: 1px solid var(--rule-light);
+    }
+    .shortcut-row:last-child { border-bottom: none; }
+    .shortcut-key {
+      display: inline-flex; align-items: center; gap: 0.2rem;
+      font-family: monospace; font-size: 0.78rem; color: var(--ink-secondary);
+    }
+    .kbd {
+      display: inline-block; padding: 0.15rem 0.4rem; background: var(--bg-warm);
+      border: 1px solid var(--rule); border-radius: 4px; font-size: 0.75rem;
+      font-family: monospace; color: var(--ink-secondary); box-shadow: 0 1px 0 var(--rule);
+    }
+
+    .link-input-wrap {
+      display: flex; gap: 0.5rem; margin-top: 0.75rem;
+    }
+    .link-input {
+      flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--rule);
+      border-radius: var(--radius-sm); font-size: 0.85rem; font-family: var(--font-sans);
+      outline: none; transition: border-color var(--transition);
+    }
+    .link-input:focus { border-color: var(--accent); }
+    .btn-primary {
+      padding: 0.5rem 1rem; background: var(--accent); color: #fff; border: none;
+      border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 500;
+      cursor: pointer; font-family: var(--font-sans); transition: all var(--transition);
+    }
+    .btn-primary:hover { background: var(--accent-dark); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+
+    <!-- 顶部导航栏 -->
+    <nav class="top-nav" id="topNav">
+      <div class="nav-brand">
+        <div class="nav-logo">L</div>
+        <div class="nav-title">LinGo<span>灵感速记与大纲生成器</span></div>
+      </div>
+      <div class="nav-actions">
+        <button class="nav-btn" id="btnShortcuts" title="快捷键">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10"/></svg>
+          快捷键
+        </button>
+        <button class="nav-btn-icon" id="btnSettings" title="设置">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- 侧边栏展开/收起按钮 -->
+    <button class="sidebar-toggle" id="sidebarToggle" title="展开/收起灵感历史">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+
+    <!-- 主体内容 — 三栏布局 -->
+    <div class="main-content">
+
+      <!-- ====== 左侧：灵感历史 F07 ====== -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-title">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            灵感历史
+            <span class="count" id="historyCount">4</span>
+          </div>
+          <div class="sidebar-actions">
+            <button class="sidebar-action-btn" id="btnClearHistory" title="清空历史">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="sidebar-search">
+          <div class="search-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" class="search-input" id="historySearch" placeholder="搜索历史记录...">
+          </div>
+        </div>
+        <div class="history-list" id="historyList">
+          <div class="history-card active" data-id="1">
+            <div class="history-card-title">关于 AI 产品设计的三个思考</div>
+            <div class="history-card-meta"><span>3 条灵感</span><span class="dot"></span><span>2 分钟前</span></div>
+            <div class="history-card-actions"><button class="history-card-action" data-action="delete">删除</button></div>
+          </div>
+          <div class="history-card" data-id="2">
+            <div class="history-card-title">周末读书笔记整理</div>
+            <div class="history-card-meta"><span>5 条灵感</span><span class="dot"></span><span>1 小时前</span></div>
+            <div class="history-card-actions"><button class="history-card-action" data-action="delete">删除</button></div>
+          </div>
+          <div class="history-card" data-id="3">
+            <div class="history-card-title">Q3 产品规划会议</div>
+            <div class="history-card-meta"><span>语音 12 分钟</span><span class="dot"></span><span>昨天</span></div>
+            <div class="history-card-actions"><button class="history-card-action" data-action="delete">删除</button></div>
+          </div>
+          <div class="history-card" data-id="4">
+            <div class="history-card-title">博客选题：远程办公效率</div>
+            <div class="history-card-meta"><span>2 条灵感</span><span class="dot"></span><span>3 天前</span></div>
+            <div class="history-card-actions"><button class="history-card-action" data-action="delete">删除</button></div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ====== 右侧：AI 整理结果 + 输入区 ====== -->
+      <div class="right-area">
+
+        <!-- F05 + F08: 输出区 -->
+        <div class="output-section" id="outputSection">
+          <div class="output-header">
+            <div class="output-label">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              AI 整理结果
+              <span class="tag">F04 + F05</span>
+            </div>
+
+          </div>
+          <div class="output-body" id="outputBody">
+            <div class="output-panel active" id="panelOutline">
+              <div class="outline-content" id="outlineContent">
+                <div class="empty-state">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                  <p>在下方输入灵感内容后，点击"AI 整理并生成"</p>
+                  <small>AI 将自动分析内容并生成结构化大纲</small>
+                </div>
+              </div>
+            </div>
+            <div class="output-panel" id="panelTodo">
+              <div class="todo-content" id="todoContent">
+                <div class="empty-state">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  <p>待办清单将在此处展示</p>
+                  <small>AI 会根据你的灵感提取可执行的任务</small>
+                </div>
+              </div>
+            </div>
+            <div class="output-panel" id="panelMindmap">
+              <div class="mindmap-content" id="mindmapContent">
+                <div class="empty-state">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+                  <p>思维导图将在此处展示</p>
+                  <small>支持展开/折叠交互，可导出 SVG/PNG</small>
+                </div>
+              </div>
+            </div>
+            <div class="output-panel" id="panelMeeting">
+              <div class="meeting-content" id="meetingContent">
+                <div class="empty-state">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <p>会议纪要框架将在此处展示</p>
+                  <small>包含议题、讨论要点、决议事项和待办清单</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="output-actions" id="outputActions">
+            <div class="output-tabs" id="outputTabs">
+              <button class="output-tab active" data-tab="outline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>文章大纲
+              </button>
+              <button class="output-tab" data-tab="todo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>待办清单
+              </button>
+              <button class="output-tab" data-tab="mindmap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>脑图
+              </button>
+              <button class="output-tab" data-tab="meeting">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>会议纪要
+              </button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">
+              <button class="action-btn action-btn--primary" id="btnCopyText">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>复制文本
+              </button>
+              <button class="action-btn" id="btnCopyMd">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>复制 Markdown
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- F01 + F02 + F03: 输入区 -->
+        <div class="input-section" id="inputSection">
+          <div class="input-header">
+            <div class="input-label">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              灵感输入
+              <span class="tag">F01</span>
+            </div>
+            <span class="input-hint">支持文字、语音、PDF 和 Word</span>
+          </div>
+
+          <div class="input-file-bar" id="inputFileBar">
+            <div style="position: relative; display: inline-block;">
+              <button class="file-menu-toggle" id="btnFileMenu" title="添加文件">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                添加文件
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="file-menu-dropdown" id="fileMenuDropdown">
+                <div class="file-menu-item" id="menuUploadPdf">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  上传 PDF 文件
+                </div>
+                <div class="file-menu-item" id="menuUploadWord">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  上传 Word 文档
+                </div>
+              </div>
+            </div>
+            <button class="tool-btn-sm" id="btnPasteLink" title="粘贴网页链接">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              粘贴链接
+            </button>
+            <div class="ref-count-sm" id="refCountSm" style="display: none;">
+              <span class="dot-sm"></span>
+              <span id="refCountTextSm">已引用 0 份资料</span>
+            </div>
+          </div>
+
+          <textarea
+            class="input-textarea"
+            id="inputTextarea"
+            placeholder="在此输入你的灵感，或点击麦克风开始语音记录..."
+            rows="2"
+          ></textarea>
+
+          <div class="input-footer">
+            <div class="toolbar-inline">
+              <button class="tool-btn-sm tool-btn-sm--mic" id="btnMic" title="语音输入">
+                <span class="mic-dot-sm"></span>开始录音
+              </button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span class="input-stats" id="inputStats">0 字 · 0 段</span>
+              <button class="btn-generate-sm" id="btnGenerate" disabled>
+                <svg class="btn-gen-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <div class="spinner-sm"></div>
+                AI 整理
+              </button>
+            </div>
+          </div>
+
+          <div id="refListSm"></div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast 容器 -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- 设置面板 -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">设置</div>
+        <button class="modal-close" id="closeSettings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">深色模式</div>
+            <div class="setting-desc">切换深色/浅色主题</div>
+          </div>
+          <div class="toggle-switch" id="toggleDarkMode"></div>
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">自动保存</div>
+            <div class="setting-desc">输入时自动保存到本地</div>
+          </div>
+          <div class="toggle-switch active" id="toggleAutoSave"></div>
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">生成后自动复制</div>
+            <div class="setting-desc">AI 整理完成后自动复制结果</div>
+          </div>
+          <div class="toggle-switch" id="toggleAutoCopy"></div>
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">清除所有数据</div>
+            <div class="setting-desc">删除所有本地保存的记录</div>
+          </div>
+          <button class="btn-primary" id="btnClearAllData" style="background:var(--danger);">清除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 快捷键面板 -->
+  <div class="modal-overlay" id="shortcutsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">快捷键</div>
+        <button class="modal-close" id="closeShortcuts">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="shortcut-row">
+          <span>AI 整理生成</span>
+          <div class="shortcut-key"><span class="kbd">Ctrl</span> + <span class="kbd">Enter</span></div>
+        </div>
+        <div class="shortcut-row">
+          <span>停止录音</span>
+          <div class="shortcut-key"><span class="kbd">Esc</span></div>
+        </div>
+        <div class="shortcut-row">
+          <span>切换侧边栏</span>
+          <div class="shortcut-key"><span class="kbd">Ctrl</span> + <span class="kbd">B</span></div>
+        </div>
+        <div class="shortcut-row">
+          <span>聚焦输入框</span>
+          <div class="shortcut-key"><span class="kbd">Ctrl</span> + <span class="kbd">/</span></div>
+        </div>
+        <div class="shortcut-row">
+          <span>复制当前结果</span>
+          <div class="shortcut-key"><span class="kbd">Ctrl</span> + <span class="kbd">Shift</span> + <span class="kbd">C</span></div>
+        </div>
+        <div class="shortcut-row">
+          <span>新建灵感</span>
+          <div class="shortcut-key"><span class="kbd">Ctrl</span> + <span class="kbd">N</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 粘贴链接面板 -->
+  <div class="modal-overlay" id="linkModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">粘贴网页链接</div>
+        <button class="modal-close" id="closeLinkModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">输入网页链接，AI 将抓取内容并整理</p>
+        <div class="link-input-wrap">
+          <input type="text" class="link-input" id="linkInput" placeholder="https://...">
+          <button class="btn-primary" id="btnConfirmLink">确认</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 隐藏的文件上传 input -->
+  <input type="file" id="fileUploadInput" accept=".pdf,.doc,.docx" style="display:none;">
+
+  <script>
+    /* ===== 工具函数 ===== */
+    function showToast(message, type = 'default') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    /* ===== 导航栏滚动效果 ===== */
+    const topNav = document.getElementById('topNav');
+    window.addEventListener('scroll', () => {
+      topNav.classList.toggle('scrolled', window.scrollY > 10);
+    });
+
+    /* ===== 侧边栏展开/收起 ===== */
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      sidebarToggle.classList.toggle('collapsed');
+      // 保存状态到 localStorage
+      localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    });
+
+    // 恢复上次状态
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      sidebar.classList.add('collapsed');
+      sidebarToggle.classList.add('collapsed');
+    }
+
+    /* ===== F01: 输入区字数统计 & 生成按钮状态 ===== */
+    const inputTextarea = document.getElementById('inputTextarea');
+    const inputStats = document.getElementById('inputStats');
+    const btnGenerate = document.getElementById('btnGenerate');
+
+    function updateInputStats() {
+      const text = inputTextarea.value;
+      const chars = text.replace(/\s/g, '').length;
+      const lines = text.split('\n').filter(l => l.trim()).length;
+      inputStats.textContent = `${chars} 字 · ${lines} 段`;
+      btnGenerate.disabled = chars === 0;
+    }
+    inputTextarea.addEventListener('input', updateInputStats);
+
+    /* ===== F02: 语音录音按钮 UI 切换 ===== */
+    const btnMic = document.getElementById('btnMic');
+    let isRecording = false;
+    btnMic.addEventListener('click', () => {
+      isRecording = !isRecording;
+      if (isRecording) {
+        btnMic.classList.add('recording');
+        btnMic.innerHTML = '<span class="mic-dot-sm"></span> 停止录音';
+        showToast('录音已开始，请说话...', 'default');
+      } else {
+        btnMic.classList.remove('recording');
+        btnMic.innerHTML = '<span class="mic-dot-sm"></span> 开始录音';
+        showToast('录音已停止', 'default');
+      }
+    });
+
+    /* ===== F03: 展开式文件菜单 + 上传 PDF / Word ===== */
+    const btnFileMenu = document.getElementById('btnFileMenu');
+    const fileMenuDropdown = document.getElementById('fileMenuDropdown');
+    const menuUploadPdf = document.getElementById('menuUploadPdf');
+    const menuUploadWord = document.getElementById('menuUploadWord');
+    const btnPasteLink = document.getElementById('btnPasteLink');
+    const refListSm = document.getElementById('refListSm');
+    const refCountSm = document.getElementById('refCountSm');
+    const refCountTextSm = document.getElementById('refCountTextSm');
+    let refCount = 0;
+
+    btnFileMenu.addEventListener('click', () => {
+      btnFileMenu.classList.toggle('expanded');
+      fileMenuDropdown.classList.toggle('show');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!btnFileMenu.contains(e.target) && !fileMenuDropdown.contains(e.target)) {
+        btnFileMenu.classList.remove('expanded');
+        fileMenuDropdown.classList.remove('show');
+      }
+    });
+
+    function addRefCard(name, type, status) {
+      refCount++;
+      refCountSm.style.display = 'flex';
+      refCountTextSm.textContent = `已引用 ${refCount} 份资料`;
+
+      const card = document.createElement('div');
+      card.className = 'ref-card-sm';
+      card.innerHTML = `
+        <div class="ref-icon-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="ref-info-sm">
+          <div class="ref-name-sm">${name}</div>
+          <div class="ref-meta-sm">${type === 'pdf' ? 'PDF 文件' : 'Word 文档'}</div>
+        </div>
+        <span class="ref-status-sm ${status}">${status === 'done' ? '已解析' : '解析中'}</span>
+        <button class="ref-remove-sm" title="移除引用">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      `;
+      refListSm.appendChild(card);
+
+      card.querySelector('.ref-remove-sm').addEventListener('click', () => {
+        card.remove(); refCount--;
+        refCountTextSm.textContent = refCount > 0 ? `已引用 ${refCount} 份资料` : '';
+        if (refCount === 0) refCountSm.style.display = 'none';
+      });
+
+      if (status === 'loading') {
+        setTimeout(() => {
+          const statusEl = card.querySelector('.ref-status-sm');
+          statusEl.className = 'ref-status-sm done';
+          statusEl.textContent = '已解析';
+          showToast(`${name} 解析完成`, 'success');
+        }, 2000);
+      }
+    }
+
+
+
+    /* ===== F04: AI 生成按钮 ===== */
+    btnGenerate.addEventListener('click', () => {
+      const text = inputTextarea.value.trim();
+      if (!text) { showToast('请先输入内容', 'error'); return; }
+
+      btnGenerate.classList.add('loading');
+      btnGenerate.disabled = true;
+      showSkeletonLoading();
+
+      setTimeout(() => {
+        btnGenerate.classList.remove('loading');
+        btnGenerate.disabled = false;
+        renderDemoOutput();
+        showToast('整理完成，已生成 4 种格式', 'success');
+      }, 3000);
+    });
+
+    function showSkeletonLoading() {
+      const panels = ['outlineContent', 'todoContent', 'mindmapContent', 'meetingContent'];
+      panels.forEach(id => {
+        document.getElementById(id).innerHTML = `
+          <div class="skeleton skeleton-line long"></div>
+          <div class="skeleton skeleton-line medium"></div>
+          <div class="skeleton skeleton-line short"></div>
+          <div class="skeleton skeleton-line long" style="margin-left:1rem;width:70%"></div>
+          <div class="skeleton skeleton-line medium" style="margin-left:1rem;width:55%"></div>
+          <div class="skeleton skeleton-line long"></div>
+          <div class="skeleton skeleton-line short"></div>
+        `;
+      });
+    }
+
+    /* ===== F05: 渲染示例输出 ===== */
+    function renderDemoOutput() {
+      document.getElementById('outlineContent').innerHTML = `
+        <h1>AI 产品设计的三个核心思考</h1>
+        <h2>一、用户体验优先</h2>
+        <h3>1.1 极简交互设计</h3><p>打开即用，无需配置，降低用户认知负担</p>
+        <h3>1.2 即时反馈机制</h3><p>每个操作都应有明确的视觉反馈，增强用户信心</p>
+        <h3>1.3 零配置原则</h3><p>默认设置满足 80% 用户需求，高级选项隐藏在设置中</p>
+        <h2>二、技术可行性</h2>
+        <h3>2.1 语音转写技术选型</h3><p>基于成熟第三方 API（讯飞/阿里），准确率 > 95%</p>
+        <h3>2.2 AI 结构化引擎</h3><p>利用大语言模型的文本理解能力，实现主题聚类和关联分析</p>
+        <h2>三、商业化路径</h2>
+        <h3>3.1 免费增值模式</h3><p>基础功能免费，高级 AI 功能按量计费</p>
+        <h3>3.2 竞品差异化定位</h3><p>聚焦"灵感到结构"窄而深的环节，不做全能知识库</p>
+      `;
+
+      document.getElementById('todoContent').innerHTML = `
+        <div class="todo-item"><div class="todo-checkbox"></div><div class="todo-text">完成产品需求文档（PRD）终稿</div><span class="todo-priority p0">P0</span></div>
+        <div class="todo-item"><div class="todo-checkbox"></div><div class="todo-text">调研 3 款语音转写 API 并输出对比报告</div><span class="todo-priority p0">P0</span></div>
+        <div class="todo-item"><div class="todo-checkbox"></div><div class="todo-text">设计输入区交互原型（含语音按钮状态）</div><span class="todo-priority p1">P1</span></div>
+        <div class="todo-item"><div class="todo-checkbox"></div><div class="todo-text">确定 AI 模型选型方案</div><span class="todo-priority p1">P1</span></div>
+        <div class="todo-item"><div class="todo-checkbox"></div><div class="todo-text">搭建前端项目框架</div><span class="todo-priority p1">P1</span></div>
+        <div class="todo-item"><div class="todo-checkbox"></div><div class="todo-text">设计脑图可视化方案</div><span class="todo-priority p2">P2</span></div>
+        <div class="todo-item"><div class="todo-checkbox"></div><div class="todo-text">编写 LocalStorage 数据持久化模块</div><span class="todo-priority p2">P2</span></div>
+        <div class="todo-item"><div class="todo-checkbox"></div><div class="todo-text">准备内测用户招募方案</div><span class="todo-priority p2">P2</span></div>
+      `;
+
+      document.getElementById('mindmapContent').innerHTML = `
+        <svg width="720" height="320" viewBox="0 0 720 320" style="max-width:100%;height:auto;">
+          <rect x="280" y="130" width="160" height="44" rx="22" fill="#0D7C66" stroke="none"/>
+          <text x="360" y="157" text-anchor="middle" fill="#fff" font-size="14" font-weight="600" font-family="'Noto Sans SC', sans-serif">AI 产品设计思考</text>
+          <path d="M280,152 Q200,152 160,80" stroke="#0D7C66" stroke-width="1.5" fill="none"/>
+          <path d="M280,152 Q180,152 140,152" stroke="#0D7C66" stroke-width="1.5" fill="none"/>
+          <path d="M280,152 Q200,152 160,230" stroke="#0D7C66" stroke-width="1.5" fill="none"/>
+          <path d="M440,152 Q520,152 560,80" stroke="#0D7C66" stroke-width="1.5" fill="none"/>
+          <path d="M440,152 Q540,152 580,152" stroke="#0D7C66" stroke-width="1.5" fill="none"/>
+          <path d="M440,152 Q520,152 560,230" stroke="#0D7C66" stroke-width="1.5" fill="none"/>
+          <rect x="60" y="60" width="100" height="34" rx="17" fill="#E8F5F1" stroke="#0D7C66" stroke-width="1"/>
+          <text x="110" y="82" text-anchor="middle" fill="#0D7C66" font-size="12" font-family="'Noto Sans SC', sans-serif">用户体验优先</text>
+          <rect x="40" y="135" width="100" height="34" rx="17" fill="#E8F5F1" stroke="#0D7C66" stroke-width="1"/>
+          <text x="90" y="157" text-anchor="middle" fill="#0D7C66" font-size="12" font-family="'Noto Sans SC', sans-serif">技术可行性</text>
+          <rect x="60" y="213" width="100" height="34" rx="17" fill="#E8F5F1" stroke="#0D7C66" stroke-width="1"/>
+          <text x="110" y="235" text-anchor="middle" fill="#0D7C66" font-size="12" font-family="'Noto Sans SC', sans-serif">商业化路径</text>
+          <rect x="560" y="60" width="100" height="34" rx="17" fill="#E8F5F1" stroke="#0D7C66" stroke-width="1"/>
+          <text x="610" y="82" text-anchor="middle" fill="#0D7C66" font-size="12" font-family="'Noto Sans SC', sans-serif">竞品差异化</text>
+          <rect x="580" y="135" width="100" height="34" rx="17" fill="#E8F5F1" stroke="#0D7C66" stroke-width="1"/>
+          <text x="630" y="157" text-anchor="middle" fill="#0D7C66" font-size="12" font-family="'Noto Sans SC', sans-serif">MVP 范围</text>
+          <rect x="560" y="213" width="100" height="34" rx="17" fill="#E8F5F1" stroke="#0D7C66" stroke-width="1"/>
+          <text x="610" y="235" text-anchor="middle" fill="#0D7C66" font-size="12" font-family="'Noto Sans SC', sans-serif">用户反馈闭环</text>
+          <line x1="60" y1="77" x2="20" y2="45" stroke="#E8E6E1" stroke-width="1"/>
+          <line x1="60" y1="77" x2="20" y2="77" stroke="#E8E6E1" stroke-width="1"/>
+          <line x1="60" y1="77" x2="20" y2="109" stroke="#E8E6E1" stroke-width="1"/>
+          <rect x="-30" y="33" width="50" height="22" rx="11" fill="#fff" stroke="#E8E6E1" stroke-width="1"/>
+          <text x="-5" y="48" text-anchor="middle" fill="#8C8C8C" font-size="9" font-family="'Noto Sans SC', sans-serif">极简交互</text>
+          <rect x="-30" y="66" width="50" height="22" rx="11" fill="#fff" stroke="#E8E6E1" stroke-width="1"/>
+          <text x="-5" y="81" text-anchor="middle" fill="#8C8C8C" font-size="9" font-family="'Noto Sans SC', sans-serif">即时反馈</text>
+          <rect x="-30" y="98" width="50" height="22" rx="11" fill="#fff" stroke="#E8E6E1" stroke-width="1"/>
+          <text x="-5" y="113" text-anchor="middle" fill="#8C8C8C" font-size="9" font-family="'Noto Sans SC', sans-serif">零配置</text>
+          <line x1="660" y1="77" x2="700" y2="45" stroke="#E8E6E1" stroke-width="1"/>
+          <line x1="660" y1="77" x2="700" y2="77" stroke="#E8E6E1" stroke-width="1"/>
+          <line x1="660" y1="77" x2="700" y2="109" stroke="#E8E6E1" stroke-width="1"/>
+          <rect x="700" y="33" width="50" height="22" rx="11" fill="#fff" stroke="#E8E6E1" stroke-width="1"/>
+          <text x="725" y="48" text-anchor="middle" fill="#8C8C8C" font-size="9" font-family="'Noto Sans SC', sans-serif">语音+AI</text>
+          <rect x="700" y="66" width="50" height="22" rx="11" fill="#fff" stroke="#E8E6E1" stroke-width="1"/>
+          <text x="725" y="81" text-anchor="middle" fill="#8C8C8C" font-size="9" font-family="'Noto Sans SC', sans-serif">中文原生</text>
+          <rect x="700" y="98" width="50" height="22" rx="11" fill="#fff" stroke="#E8E6E1" stroke-width="1"/>
+          <text x="725" y="113" text-anchor="middle" fill="#8C8C8C" font-size="9" font-family="'Noto Sans SC', sans-serif">全链路</text>
+        </svg>
+        <div style="display:flex;justify-content:center;gap:0.5rem;margin-top:0.75rem;">
+          <button class="tool-btn-sm" style="font-size:0.78rem;">展开全部</button>
+          <button class="tool-btn-sm" style="font-size:0.78rem;">折叠全部</button>
+        </div>
+      `;
+
+      document.getElementById('meetingContent').innerHTML = `
+        <div class="meeting-block">
+          <div class="meeting-block-title">会议主题</div>
+          <div class="meeting-item"><strong>AI 产品设计方向讨论会</strong></div>
+        </div>
+        <div class="meeting-block">
+          <div class="meeting-block-title">议题一：产品定位</div>
+          <div class="meeting-item">聚焦"灵感捕获到结构化输出"这一窄而深环节</div>
+          <div class="meeting-item">不做全能知识库，与 Notion 形成差异化</div>
+          <div class="meeting-item">核心优势：极简交互 + 中文语音 + AI 原生</div>
+        </div>
+        <div class="meeting-block">
+          <div class="meeting-block-title">议题二：技术选型</div>
+          <div class="meeting-item">语音转写：接入讯飞/阿里成熟 API，不自研</div>
+          <div class="meeting-item">AI 引擎：大语言模型做结构化整理</div>
+          <div class="meeting-item">前端：单页应用，LocalStorage 做本地存储</div>
+        </div>
+        <div class="meeting-block">
+          <div class="meeting-block-title">决议事项</div>
+          <div class="meeting-item"><strong>确认 MVP 范围：</strong>输入区 + 语音 + AI 整理 + 大纲/脑图输出</div>
+          <div class="meeting-item"><strong>确认时间线：</strong>10 周完成从需求到上线</div>
+        </div>
+        <div class="meeting-block">
+          <div class="meeting-block-title">待办清单</div>
+          <div class="meeting-item">完成 PRD 终稿 — <strong>@产品经理</strong> — 本周五前</div>
+          <div class="meeting-item">语音 API 对比报告 — <strong>@后端工程师</strong> — 下周三前</div>
+          <div class="meeting-item">前端原型设计 — <strong>@前端工程师</strong> — 下周五前</div>
+        </div>
+      `;
+
+      document.querySelectorAll('.todo-checkbox').forEach(cb => {
+        cb.addEventListener('click', function() {
+          this.classList.toggle('checked');
+          this.nextElementSibling.classList.toggle('done');
+        });
+      });
+    }
+
+    /* ===== F08: Tab 切换 ===== */
+    const outputTabs = document.getElementById('outputTabs');
+    const outputPanels = document.querySelectorAll('.output-panel');
+    const btnExportImg = document.getElementById('btnExportImg');
+
+    outputTabs.addEventListener('click', (e) => {
+      const tab = e.target.closest('.output-tab');
+      if (!tab) return;
+      const tabName = tab.dataset.tab;
+      outputTabs.querySelectorAll('.output-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      outputPanels.forEach(p => p.classList.remove('active'));
+      document.getElementById(`panel${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('active');
+      btnExportImg.style.display = tabName === 'mindmap' ? 'inline-flex' : 'none';
+    });
+
+    /* ===== F06: 复制/导出 ===== */
+    async function copyToClipboard(text, label) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast(`${label}已复制到剪贴板`, 'success');
+      } catch (err) {
+        // 降级方案
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast(`${label}已复制到剪贴板`, 'success');
+      }
+    }
+
+    function getActivePanelContent() {
+      const activePanel = document.querySelector('.output-panel.active');
+      if (!activePanel) return '';
+      return activePanel.innerText || '';
+    }
+
+    function htmlToMarkdown(html) {
+      // 简单的 HTML 转 Markdown
+      let md = html;
+      md = md.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n');
+      md = md.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n');
+      md = md.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n');
+      md = md.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n');
+      md = md.replace(/<strong>(.*?)<\/strong>/gi, '**$1**');
+      md = md.replace(/<div class="todo-item"[^>]*>.*?<div class="todo-text"[^>]*>(.*?)<\/div>/gi, '- [ ] $1\n');
+      md = md.replace(/<div class="meeting-block-title"[^>]*>(.*?)<\/div>/gi, '## $1\n\n');
+      md = md.replace(/<div class="meeting-item"[^>]*>(.*?)<\/div>/gi, '- $1\n');
+      md = md.replace(/<[^>]+>/g, '');
+      md = md.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+      return md.trim();
+    }
+
+    document.getElementById('btnCopyText').addEventListener('click', () => {
+      const text = getActivePanelContent();
+      if (!text) { showToast('暂无内容可复制', 'error'); return; }
+      copyToClipboard(text, '文本');
+    });
+
+    document.getElementById('btnCopyMd').addEventListener('click', () => {
+      const activePanel = document.querySelector('.output-panel.active');
+      if (!activePanel) { showToast('暂无内容可复制', 'error'); return; }
+      const md = htmlToMarkdown(activePanel.innerHTML);
+      copyToClipboard(md, 'Markdown');
+    });
+
+    document.getElementById('btnExportImg').addEventListener('click', () => showToast('导出图片功能待实现', 'default'));
+
+    /* ===== F07: 历史记录 ===== */
+    const historyList = document.getElementById('historyList');
+    const historySearch = document.getElementById('historySearch');
+
+    historyList.addEventListener('click', (e) => {
+      const card = e.target.closest('.history-card');
+      const deleteBtn = e.target.closest('.history-card-action');
+      if (deleteBtn) {
+        card.style.transition = 'all 0.3s ease';
+        card.style.opacity = '0'; card.style.transform = 'translateX(20px)';
+        setTimeout(() => { card.remove(); updateHistoryCount(); showToast('记录已删除', 'default'); }, 300);
+        return;
+      }
+      if (card) {
+        historyList.querySelectorAll('.history-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        showToast(`已加载：${card.querySelector('.history-card-title').textContent}`, 'default');
+      }
+    });
+
+    historySearch.addEventListener('input', (e) => {
+      const keyword = e.target.value.toLowerCase();
+      historyList.querySelectorAll('.history-card').forEach(card => {
+        const title = card.querySelector('.history-card-title').textContent.toLowerCase();
+        card.style.display = title.includes(keyword) ? '' : 'none';
+      });
+    });
+
+    document.getElementById('btnClearHistory').addEventListener('click', () => {
+      if (historyList.querySelectorAll('.history-card').length > 0) {
+        historyList.innerHTML = `
+          <div class="history-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <p>暂无历史记录</p><small>开始记录你的第一条灵感吧</small>
+          </div>`;
+        updateHistoryCount();
+        showToast('历史记录已清空', 'default');
+      }
+    });
+
+    function updateHistoryCount() {
+      document.getElementById('historyCount').textContent = historyList.querySelectorAll('.history-card').length;
+    }
+
+    /* ===== 快捷键 ===== */
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!btnGenerate.disabled) btnGenerate.click();
+      }
+      if (e.key === 'Escape' && isRecording) btnMic.click();
+    });
+
+    /* ===== 模态框管理 ===== */
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+    // 设置面板
+    document.getElementById('btnSettings').addEventListener('click', () => openModal('settingsModal'));
+    document.getElementById('closeSettings').addEventListener('click', () => closeModal('settingsModal'));
+    document.getElementById('settingsModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeModal('settingsModal');
+    });
+
+    // 快捷键面板
+    document.getElementById('btnShortcuts').addEventListener('click', () => openModal('shortcutsModal'));
+    document.getElementById('closeShortcuts').addEventListener('click', () => closeModal('shortcutsModal'));
+    document.getElementById('shortcutsModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeModal('shortcutsModal');
+    });
+
+    // 链接面板
+    document.getElementById('closeLinkModal').addEventListener('click', () => closeModal('linkModal'));
+    document.getElementById('linkModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeModal('linkModal');
+    });
+
+    // Toggle 开关
+    document.querySelectorAll('.toggle-switch').forEach(toggle => {
+      toggle.addEventListener('click', () => toggle.classList.toggle('active'));
+    });
+
+    // 清除所有数据
+    document.getElementById('btnClearAllData').addEventListener('click', () => {
+      if (confirm('确定要清除所有本地数据吗？此操作不可恢复。')) {
+        localStorage.clear();
+        showToast('所有数据已清除', 'success');
+        closeModal('settingsModal');
+      }
+    });
+
+    /* ===== 文件上传 ===== */
+    const fileUploadInput = document.getElementById('fileUploadInput');
+
+    menuUploadPdf.addEventListener('click', () => {
+      fileUploadInput.accept = '.pdf';
+      fileUploadInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          addRefCard(file.name, 'pdf', 'loading');
+          showToast(`PDF ${file.name} 已上传`, 'success');
+        }
+        e.target.value = '';
+      };
+      fileUploadInput.click();
+      btnFileMenu.classList.remove('expanded');
+      fileMenuDropdown.classList.remove('show');
+    });
+
+    menuUploadWord.addEventListener('click', () => {
+      fileUploadInput.accept = '.doc,.docx';
+      fileUploadInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          addRefCard(file.name, 'word', 'loading');
+          showToast(`Word ${file.name} 已上传`, 'success');
+        }
+        e.target.value = '';
+      };
+      fileUploadInput.click();
+      btnFileMenu.classList.remove('expanded');
+      fileMenuDropdown.classList.remove('show');
+    });
+
+    /* ===== 链接粘贴 ===== */
+    btnPasteLink.addEventListener('click', () => {
+      openModal('linkModal');
+      setTimeout(() => document.getElementById('linkInput').focus(), 100);
+    });
+
+    document.getElementById('btnConfirmLink').addEventListener('click', () => {
+      const url = document.getElementById('linkInput').value.trim();
+      if (!url) { showToast('请输入链接', 'error'); return; }
+      if (!/^https?:\/\//.test(url)) { showToast('请输入有效的网址', 'error'); return; }
+      addRefCard(new URL(url).hostname, 'link', 'loading');
+      document.getElementById('linkInput').value = '';
+      closeModal('linkModal');
+      showToast('链接已添加，正在抓取内容...', 'default');
+    });
+
+    document.getElementById('linkInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('btnConfirmLink').click();
+    });
+
+    /* ===== 增强快捷键 ===== */
+    document.addEventListener('keydown', (e) => {
+      // Ctrl+B 切换侧边栏
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault();
+        sidebarToggle.click();
+      }
+      // Ctrl+/ 聚焦输入框
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        inputTextarea.focus();
+      }
+      // Ctrl+Shift+C 复制当前结果
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        document.getElementById('btnCopyText').click();
+      }
+      // ESC 关闭模态框
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.show').forEach(m => m.classList.remove('show'));
+      }
+    });
+
+    /* ===== 自动保存 ===== */
+    let autoSaveTimer = null;
+    inputTextarea.addEventListener('input', () => {
+      if (document.getElementById('toggleAutoSave').classList.contains('active')) {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(() => {
+          const draft = inputTextarea.value.trim();
+          if (draft) {
+            localStorage.setItem('draft', draft);
+            showToast('已自动保存', 'default');
+          }
+        }, 2000);
+      }
+    });
+
+    // 恢复草稿
+    const savedDraft = localStorage.getItem('draft');
+    if (savedDraft) {
+      inputTextarea.value = savedDraft;
+      updateInputStats();
+    }
+  </script>
+</body>
+</html>
